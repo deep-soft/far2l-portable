@@ -2,6 +2,7 @@ name: build
 run-name: 🌙 Nightly build for ${{ github.event.client_payload.tag }}-${{ github.event.client_payload.sha }}
 
 on:
+  workflow_dispatch:
   repository_dispatch:
     types: [build-nightly]
 

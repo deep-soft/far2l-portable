@@ -80,7 +80,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-          arch: [x86_64, x86, aarch64, armhf, armv7, ppc64le, s390x]
+          #arch: [x86_64, x86, aarch64, armhf, armv7, ppc64le, s390x]
+          arch: [x86_64, x86, aarch64, armhf, armv7]
           os: [ubuntu-latest]
     steps:
       - name: Checkout
@@ -139,65 +140,66 @@ jobs:
             ./**/far2l*.tar*
           if-no-files-found: error
 
-  build-AppImage:
-    name: build AppImage
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-20.04]
-    steps:
-      - name: Add build dependencies
-        env:
-          PACKAGES: >
-            ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
-            libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch patchelf quilt wget
-        run: |
-            sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
-
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Checkout far2l
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ env.client_payload_repo }}
-          path: far2l
-
-      - name: Setup ccache
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ matrix.os }}-${{ env.client_payload_sha }}
-          restore-keys: |
-            ccache-${{ matrix.os }}-
-
-      - name: Build far2l
-        working-directory: ./far2l
-        env:
-          DATE: ${{ env.client_payload_date }}
-          SHA:  ${{ env.client_payload_sha }}
-          TAG:  ${{ env.client_payload_tag }}
-          CCACHE_DIR: ${{ github.workspace }}/.ccache
-          DESTDIR: ${{ github.workspace }}/AppDir
-          APPIMAGE: true
-          PLUGINS_EXTRA: true
-        shell: bash
-        run: |
-          export VERSION=${TAG}.git${DATE}
-          export PKG_NAME=far2l_${VERSION}_$(uname -m)
-          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
-
-      - name: Upload
-        uses: actions/upload-artifact@v3
-        with:
-          name: far2l-AppImage-${{ matrix.os }}
-          path: |
-            ./**/far2l*.tar*
-          if-no-files-found: error
+#  build-AppImage:
+#    name: build AppImage
+#    runs-on: ${{ matrix.os }}
+#    strategy:
+#      matrix:
+#        os: [ubuntu-20.04]
+#    steps:
+#      - name: Add build dependencies
+#        env:
+#          PACKAGES: >
+#            ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
+#            libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch patchelf quilt wget
+#        run: |
+#            sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
+#
+#      - name: Checkout
+#        uses: actions/checkout@v3
+#
+#      - name: Checkout far2l
+#        uses: actions/checkout@v3
+#        with:
+#          repository: ${{ env.client_payload_repo }}
+#          path: far2l
+#
+#      - name: Setup ccache
+#        uses: actions/cache@v3
+#        with:
+#          path: ${{ github.workspace }}/.ccache
+#          key: ccache-${{ matrix.os }}-${{ env.client_payload_sha }}
+#          restore-keys: |
+#            ccache-${{ matrix.os }}-
+#
+#      - name: Build far2l
+#        working-directory: ./far2l
+#        env:
+#          DATE: ${{ env.client_payload_date }}
+#          SHA:  ${{ env.client_payload_sha }}
+#          TAG:  ${{ env.client_payload_tag }}
+#          CCACHE_DIR: ${{ github.workspace }}/.ccache
+#          DESTDIR: ${{ github.workspace }}/AppDir
+#          APPIMAGE: true
+#          PLUGINS_EXTRA: true
+#        shell: bash
+#        run: |
+#          export VERSION=${TAG}.git${DATE}
+#          export PKG_NAME=far2l_${VERSION}_$(uname -m)
+#          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+#
+#      - name: Upload
+#        uses: actions/upload-artifact@v3
+#        with:
+#          name: far2l-AppImage-${{ matrix.os }}
+#          path: |
+#            ./**/far2l*.tar*
+#          if-no-files-found: error
 
   release:
     name: Upload Nightly release
-    needs: [build, build-chroot, build-AppImage]
+    #needs: [build, build-chroot, build-AppImage]
+    needs: [build, build-chroot]
     permissions:
       contents: write
     runs-on: ubuntu-latest

@@ -1,0 +1,129 @@
+name: act-build - x64, x86, armhf, armv7
+run-name: Build 2.5.2 - x64, x86, armhf, armv7
+
+env:
+   client_payload_tag: '2.5.2'
+   client_payload_sha: 'c7d34d0'
+   client_payload_repo: 'deep-soft/far2l'
+   client_payload_date: '20231004'
+   client_payload_url: 'deep-soft/far2l'
+   client_payload_message: 'far2l portable'
+
+on:
+  workflow_dispatch:
+    inputs:
+      # if: ${{ inputs.release_all }}
+      release_all:
+        description: Release all
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  build-chroot:
+    name: build ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+          arch: [x86_64, x86, armhf, armv7]
+          os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout far2l
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.client_payload_repo }}
+          path: far2l
+
+      - name: Setup ccache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
+          restore-keys: |
+            ccache-${{ matrix.arch }}-
+
+      - name: Setup Alpine Linux for ${{ matrix.arch }}
+        uses: jirutka/setup-alpine@v1
+        with:
+          arch: ${{ matrix.arch }}
+          packages: >
+            bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
+            libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar
+            uchardet-dev wget xerces-c-dev xz
+          shell-name: alpine.sh
+
+      - name: Add extra build-deps to chroot
+        shell: alpine.sh --root {0}
+        run: |
+          apk add --no-progress makeself quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+
+      - name: Build far2l inside chroot
+        working-directory: ./far2l
+        env:
+          DATE: ${{ env.client_payload_date }}
+          SHA:  ${{ env.client_payload_sha }}
+          TAG:  ${{ env.client_payload_tag }}
+          ARCH: ${{ matrix.arch }}
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          DESTDIR: ${{ github.workspace }}/AppDir
+          STANDALONE: true
+        shell: alpine.sh {0}
+        run: |
+          export VERSION=${TAG}.git${DATE}
+          export PKG_NAME=far2l_${VERSION}_${ARCH}
+          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: far2l-${{ matrix.arch }}
+          path: |
+            ./**/far2l*.tar*
+          if-no-files-found: error
+
+      - name: Publish Release
+        continue-on-error: true
+        uses: deep-soft/release-action@v1
+        with:
+          draft: ${{ env.DRAFT }}
+          tag: d-${{ env.client_payload_tag }}
+          allowUpdates: true
+          artifacts: |
+            ./**/far2l*.tar*
+
+
+  release:
+    if: ${{ inputs.release_all }}
+    name: Upload release all
+    needs: [build-chroot]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+
+      - name: Store .tar files
+        id: store
+        uses: andelf/nightly-release@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          URL: ${{ env.client_payload_url }}
+          MESSAGE: ${{ env.client_payload_message }}
+        with:
+          prerelease: false
+          tag_name: latest
+          name: ${{ env.client_payload_date }}
+          body: |
+            ${{ env.URL }}: ${{ env.MESSAGE }}
+          files: |
+            ./**/far2l_*.run.tar
+
+      - name: Delete workflow runs
+        uses: Mattraks/delete-workflow-runs@v2
+        continue-on-error: true

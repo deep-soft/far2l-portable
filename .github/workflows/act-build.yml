@@ -10,7 +10,7 @@ env:
    client_payload_sha: 'c7d34d0'
    client_payload_repo: 'github.com/deep-soft/far2l'
    client_payload_date: '20231004'
-   client_payload_url: 'github.com/deep-soft/far2l'
+   client_payload_url: 'deep-soft/far2l'
    client_payload_message: 'far2l portable'
 
 jobs:

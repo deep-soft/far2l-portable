@@ -1,3 +1,4 @@
+# 2023-10-07 08:30
 name: act-build - x64, x86
 run-name: Build 2.5.2 - x64, x86
 
@@ -33,11 +34,26 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: patch build_far2l.sh
+        shell: bash
+        run: |
+          sed -ibak 's!( cd $plug!mv far2l-$plug $plug && cd $plug!' ${GITHUB_WORKSPACE}/build_far2l.sh
+
       - name: Checkout far2l
         uses: actions/checkout@v3
         with:
           repository: ${{ env.client_payload_repo }}
           path: far2l
+
+      - name: patch far2l extra plugins
+        shell: bash
+        run: |
+          rm -R far2l/far2l-netcfgplugin;
+          rm -R far2l/far2l-processes;
+          rm -R far2l/far2l-sqlplugin;
+          sed -ibak 's!add_subdirectory (far2l-netcfgplugin)!# add_subdirectory (far2l-netcfgplugin)!' far2l/CMakeLists.txt;
+          sed -ibak 's!add_subdirectory (far2l-processes)!# add_subdirectory (far2l-processes)!' far2l/CMakeLists.txt;
+          sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
 
       - name: Setup ccache
         uses: actions/cache@v3

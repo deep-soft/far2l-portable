@@ -55,7 +55,7 @@ jobs:
           repository: ${{ env.client_payload_repo }}
           path: far2l
 
-      - name: patch far2l exsiting extra plugins
+      - name: patch far2l existing extra plugins
         shell: bash
         run: |
           echo 'remove existing extra plugin folders'

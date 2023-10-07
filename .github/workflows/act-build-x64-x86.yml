@@ -104,12 +104,13 @@ jobs:
           export PKG_NAME=far2l_${VERSION}_${ARCH}
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
-      - name: rename far2l.tar.xz
-        shell: bash
-        run: |
-          far2l_tar_xz=$(find $GITHUB_WORKSPACE -name far2l.tar.xz);
-          echo "far2l_tar_xz=$far2l_tar_xz"
-          mv ${GITHUB_WORKSPACE}/build/far2l.tar.xz ${GITHUB_WORKSPACE}/build/far2l-${{ matrix.arch }}.tar.xz
+      - name: Archive Release
+        uses: deep-soft/zip-release@v1
+        with:
+          type: 'zip'
+          filename: 'far2l-${{ matrix.arch }}.zip'
+          directory: 'install'
+          # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -127,7 +128,8 @@ jobs:
           tag: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
           allowUpdates: true
           artifacts: |
-            ./**/far2l*.tar*
+            ./**/far2l*.tar
+            ${{ env.ZIP_RELEASE_ARCHIVE }}
 
   release:
     if: ${{ inputs.release_all }}

@@ -109,7 +109,7 @@ jobs:
         with:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}.zip'
-          directory: 'install'
+          directory: '$GITHUB_WORKSPACE/far2l/build/install'
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact

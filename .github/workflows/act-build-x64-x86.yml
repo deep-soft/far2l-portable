@@ -45,7 +45,7 @@ jobs:
         run: |
           sed -ibak "s!( cd \$plug!( mv far2l-\$plug \$plug \&\& \\n       cd \$plug!" ${GITHUB_WORKSPACE}/build_far2l.sh
           # cat ${GITHUB_WORKSPACE}/build_far2l.sh
-          if [ ${{ inputs.PLUGINS_EXTRA }} ];
+          if [ ${{ inputs.PLUGINS_EXTRA }} ]; then
             echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV
           fi
 

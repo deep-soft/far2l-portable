@@ -1,6 +1,6 @@
 # 2023-10-07 08:30
 name: act-build - x64, x86
-run-name: Build 2.5.2 - x64
+run-name: Build 2.5.2 - x64, x86
 
 env:
    client_payload_name: 'far2l'
@@ -68,7 +68,7 @@ jobs:
           sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
           # patch if_tunnel.h, add ip.h before
           echo 'patch if_tunnel.h, add ip.h before'
-          sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>' netcfgplugin/common/netlink.h
+          sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>!' netcfgplugin/common/netlink.h
           echo 'grep /i.*.h netcfgplugin/common/netlink.h'
           grep '/i.*.h' netcfgplugin/common/netlink.h
           

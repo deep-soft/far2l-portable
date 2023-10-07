@@ -58,14 +58,19 @@ jobs:
       - name: patch far2l extra plugins
         shell: bash
         run: |
+          echo 'remove existing extra plugin folders'
           rm -R far2l/far2l-netcfgplugin;
           rm -R far2l/far2l-processes;
           rm -R far2l/far2l-sqlplugin;
+          echo 'remove existing extra plugin from CMakeLists.txt'
           sed -ibak 's!add_subdirectory (far2l-netcfgplugin)!# add_subdirectory (far2l-netcfgplugin)!' far2l/CMakeLists.txt;
           sed -ibak 's!add_subdirectory (far2l-processes)!# add_subdirectory (far2l-processes)!' far2l/CMakeLists.txt;
           sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
           # patch if_tunnel.h, add ip.h before
+          echo 'patch if_tunnel.h, add ip.h before'
           sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>' netcfgplugin/common/netlink.h
+          echo 'grep /i.*.h netcfgplugin/common/netlink.h'
+          grep '/i.*.h' netcfgplugin/common/netlink.h
           
       - name: Setup ccache
         uses: deep-soft/cache@v3

@@ -104,6 +104,11 @@ jobs:
           export PKG_NAME=far2l_${VERSION}_${ARCH}
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
+      - name: rename far2l.tar.xz
+        shell: bash
+        run: |
+          mv far2l.tar.xz far2l-${{ matrix.arch }}.tar.xz
+
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:

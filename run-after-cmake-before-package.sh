@@ -1,5 +1,5 @@
 #!/bin/bash
-lng_hlf_no_eng=$(find . -name *.lng -o -name *.hlf | grep -i -v "eng\.\|en\.\|e\.")
+lng_hlf_no_eng=$(find . -name *.lng -o -name *.hlf | grep -i -v "eng\.\|en\.\|calce\.|colorere\.")
 for lng_hlf in $lng_hlf_no_eng ; do
   echo "$lng_hlf";
   rm "$lng_hlf";

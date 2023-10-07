@@ -12,7 +12,8 @@ if [[ "$STANDALONE" == "true" ]]; then
 fi
 if [[ "$PLUGINS_EXTRA" == "true" ]]; then
   for plug in netcfgplugin sqlplugin processes ; do
-    git clone --depth 1 https://github.com/VPROFi/$plug.git && \
+    # git clone --depth 1 https://github.com/VPROFi/$plug.git && \
+    git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
     ( cd $plug && \
       find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
       mv src/* . && rm -rf src )

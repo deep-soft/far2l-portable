@@ -1,4 +1,4 @@
-# 2023-10-07 08:30
+# 2023-10-07 17:00
 name: act-build - x64, x86
 run-name: Build 2.5.2 - x64, x86
 
@@ -40,12 +40,18 @@ jobs:
       - name: Checkout
         uses: deep-soft/checkout@v3
 
-      - name: patch build_far2l.sh
+      - name: patch build_far2l.sh for run-after-cmake-before-package.sh
+        shell: bash
+        run: |
+          sed -ibak "!find \$REPO_DIR -type d -path \"\*/AppDir\"!i bash run-after-cmake-before-package.sh" ${GITHUB_WORKSPACE}/build_far2l.sh;
+          cat ${GITHUB_WORKSPACE}/build_far2l.sh;
+
+      - name: patch build_far2l.sh for PLUGINS_EXTRA
         if: ${{ inputs.PLUGINS_EXTRA }}
         shell: bash
         run: |
           sed -ibak "s!( cd \$plug!( mv far2l-\$plug \$plug \&\& \\n       cd \$plug!" ${GITHUB_WORKSPACE}/build_far2l.sh;
-          # cat ${GITHUB_WORKSPACE}/build_far2l.sh;
+          #cat ${GITHUB_WORKSPACE}/build_far2l.sh;
           if [ ${{ inputs.PLUGINS_EXTRA }} ]; then
             echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
           fi

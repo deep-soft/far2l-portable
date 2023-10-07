@@ -19,7 +19,7 @@ on:
         description: PLUGINS_EXTRA
         type: boolean
         required: true
-        default: true
+        default: false
       # if: ${{ inputs.release_all }}
       release_all:
         description: Release all
@@ -38,9 +38,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: deep-soft/checkout@v3
 
       - name: patch build_far2l.sh
+        if: ${{ inputs.PLUGINS_EXTRA }}
         shell: bash
         run: |
           sed -ibak "s!( cd \$plug!( mv far2l-\$plug \$plug \&\& \\n       cd \$plug!" ${GITHUB_WORKSPACE}/build_far2l.sh;
@@ -50,23 +51,46 @@ jobs:
           fi
 
       - name: Checkout far2l
-        uses: actions/checkout@v3
+        uses: deep-soft/checkout@v3
         with:
           repository: ${{ env.client_payload_repo }}
           path: far2l
 
-      - name: patch far2l extra plugins
+      - name: patch far2l existing extra plugins
         shell: bash
         run: |
+          echo 'remove existing extra plugin folders'
           rm -R far2l/far2l-netcfgplugin;
           rm -R far2l/far2l-processes;
           rm -R far2l/far2l-sqlplugin;
+          echo 'remove existing extra plugin from CMakeLists.txt'
           sed -ibak 's!add_subdirectory (far2l-netcfgplugin)!# add_subdirectory (far2l-netcfgplugin)!' far2l/CMakeLists.txt;
           sed -ibak 's!add_subdirectory (far2l-processes)!# add_subdirectory (far2l-processes)!' far2l/CMakeLists.txt;
           sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
 
+      - name: Checkout and patch far2l extra plugins
+        shell: bash
+        run: |
+          pushd far2l
+          for plug in netcfgplugin sqlplugin processes ; do
+            # git clone --depth 1 https://github.com/VPROFi/$plug.git && \
+            git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
+            ( mv far2l-$plug $plug && \
+              cd $plug && \
+              find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
+              mv src/* . && rm -rf src )
+            echo "add_subdirectory($plug)" >> CMakeLists.txt
+          done
+          # patch if_tunnel.h, add ip.h before
+          echo 'patch if_tunnel.h, add ip.h before'
+          sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>!' netcfgplugin/common/netlink.h
+          echo 'grep /i.*.h netcfgplugin/common/netlink.h'
+          grep '/i.*.h' netcfgplugin/common/netlink.h
+
+          popd
+          
       - name: Setup ccache
-        uses: actions/cache@v3
+        uses: deep-soft/cache@v3
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
@@ -74,7 +98,7 @@ jobs:
             ccache-${{ matrix.arch }}-
 
       - name: Setup Alpine Linux for ${{ matrix.arch }}
-        uses: jirutka/setup-alpine@v1
+        uses: deep-soft/setup-alpine@v1
         with:
           arch: ${{ matrix.arch }}
           packages: >
@@ -104,10 +128,13 @@ jobs:
           export PKG_NAME=far2l_${VERSION}_${ARCH}
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
-      - name: rename far2l.tar.xz
-        shell: bash
-        run: |
-          mv far2l.tar.xz far2l-${{ matrix.arch }}.tar.xz
+      - name: Archive Release
+        uses: deep-soft/zip-release@v2
+        with:
+          type: 'zip'
+          filename: 'far2l-${{ matrix.arch }}.zip'
+          directory: 'far2l/build/install'
+          # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -125,7 +152,8 @@ jobs:
           tag: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
           allowUpdates: true
           artifacts: |
-            ./**/far2l*.tar*
+            ./**/far2l*.tar
+            ${{ env.ZIP_RELEASE_ARCHIVE }}
 
   release:
     if: ${{ inputs.release_all }}

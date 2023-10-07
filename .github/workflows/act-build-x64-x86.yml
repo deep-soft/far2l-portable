@@ -38,6 +38,7 @@ jobs:
         shell: bash
         run: |
           sed -ibak 's!( cd $plug!( mv far2l-$plug $plug && cd $plug!' ${GITHUB_WORKSPACE}/build_far2l.sh
+          cat ${GITHUB_WORKSPACE}/build_far2l.sh
 
       - name: Checkout far2l
         uses: actions/checkout@v3

@@ -1,3 +1,4 @@
+# 2023-10-07 08:30
 name: act-build - x64, x86, armhf, armv7
 run-name: Build 2.5.2 - x64, x86, armhf, armv7
 
@@ -13,6 +14,12 @@ env:
 on:
   workflow_dispatch:
     inputs:
+      # if: ${{ inputs.PLUGINS_EXTRA }}
+      PLUGINS_EXTRA: 
+        description: PLUGINS_EXTRA
+        type: boolean
+        required: true
+        default: true
       # if: ${{ inputs.release_all }}
       release_all:
         description: Release all
@@ -33,11 +40,30 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
+      - name: patch build_far2l.sh
+        shell: bash
+        run: |
+          sed -ibak "s!( cd \$plug!( mv far2l-\$plug \$plug \&\& \\n       cd \$plug!" ${GITHUB_WORKSPACE}/build_far2l.sh;
+          # cat ${GITHUB_WORKSPACE}/build_far2l.sh;
+          if [ ${{ inputs.PLUGINS_EXTRA }} ]; then
+            echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
+          fi
+
       - name: Checkout far2l
         uses: actions/checkout@v3
         with:
           repository: ${{ env.client_payload_repo }}
           path: far2l
+
+      - name: patch far2l extra plugins
+        shell: bash
+        run: |
+          rm -R far2l/far2l-netcfgplugin;
+          rm -R far2l/far2l-processes;
+          rm -R far2l/far2l-sqlplugin;
+          sed -ibak 's!add_subdirectory (far2l-netcfgplugin)!# add_subdirectory (far2l-netcfgplugin)!' far2l/CMakeLists.txt;
+          sed -ibak 's!add_subdirectory (far2l-processes)!# add_subdirectory (far2l-processes)!' far2l/CMakeLists.txt;
+          sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
 
       - name: Setup ccache
         uses: actions/cache@v3
@@ -52,7 +78,7 @@ jobs:
         with:
           arch: ${{ matrix.arch }}
           packages: >
-            bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
+            git bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
             libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar
             uchardet-dev wget xerces-c-dev xz
           shell-name: alpine.sh
@@ -95,7 +121,6 @@ jobs:
           allowUpdates: true
           artifacts: |
             ./**/far2l*.tar*
-
 
   release:
     if: ${{ inputs.release_all }}

@@ -55,7 +55,7 @@ jobs:
           repository: ${{ env.client_payload_repo }}
           path: far2l
 
-      - name: patch far2l extra plugins
+      - name: patch far2l exsiting extra plugins
         shell: bash
         run: |
           echo 'remove existing extra plugin folders'
@@ -66,11 +66,27 @@ jobs:
           sed -ibak 's!add_subdirectory (far2l-netcfgplugin)!# add_subdirectory (far2l-netcfgplugin)!' far2l/CMakeLists.txt;
           sed -ibak 's!add_subdirectory (far2l-processes)!# add_subdirectory (far2l-processes)!' far2l/CMakeLists.txt;
           sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
+
+      - name: Checkout and patch far2l extra plugins
+        shell: bash
+        run: |
+          pushd far2l
+          for plug in netcfgplugin sqlplugin processes ; do
+            # git clone --depth 1 https://github.com/VPROFi/$plug.git && \
+            git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
+            ( mv far2l-$plug $plug && \
+              cd $plug && \
+              find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
+              mv src/* . && rm -rf src )
+            echo "add_subdirectory($plug)" >> CMakeLists.txt
+          done
           # patch if_tunnel.h, add ip.h before
           echo 'patch if_tunnel.h, add ip.h before'
           sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>!' netcfgplugin/common/netlink.h
           echo 'grep /i.*.h netcfgplugin/common/netlink.h'
           grep '/i.*.h' netcfgplugin/common/netlink.h
+
+          popd
           
       - name: Setup ccache
         uses: deep-soft/cache@v3

@@ -38,7 +38,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: deep-soft/checkout@v3
 
       - name: patch build_far2l.sh
         shell: bash
@@ -50,7 +50,7 @@ jobs:
           fi
 
       - name: Checkout far2l
-        uses: actions/checkout@v3
+        uses: deep-soft/checkout@v3
         with:
           repository: ${{ env.client_payload_repo }}
           path: far2l
@@ -66,7 +66,7 @@ jobs:
           sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;          
 
       - name: Setup ccache
-        uses: actions/cache@v3
+        uses: deep-soft/cache@v3
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
@@ -74,7 +74,7 @@ jobs:
             ccache-${{ matrix.arch }}-
 
       - name: Setup Alpine Linux for ${{ matrix.arch }}
-        uses: jirutka/setup-alpine@v1
+        uses: deep-soft/setup-alpine@v1
         with:
           arch: ${{ matrix.arch }}
           packages: >
@@ -109,7 +109,7 @@ jobs:
         with:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}.zip'
-          directory: '${GITHUB_WORKSPACE}/far2l/build/install'
+          directory: 'far2l/build/install'
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact

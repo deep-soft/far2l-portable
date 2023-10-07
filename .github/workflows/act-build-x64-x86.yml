@@ -107,7 +107,7 @@ jobs:
       - name: rename far2l.tar.xz
         shell: bash
         run: |
-          mv far2l.tar.xz far2l-${{ matrix.arch }}.tar.xz
+          mv ${GITHUB_WORKSPACE}/far2l/build/far2l.tar.xz ${GITHUB_WORKSPACE}/far2l/build/far2l-${{ matrix.arch }}.tar.xz
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3

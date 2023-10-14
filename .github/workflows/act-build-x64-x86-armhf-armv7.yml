@@ -1,4 +1,5 @@
-# 2023-10-07 17:00
+# 2023-10-14 13:20
+# add jumpword EditWrap
 name: act-build - x64, x86, armhf, armv7
 run-name: Build 2.5.2 - x64, x86, armhf, armv7
 
@@ -7,7 +8,7 @@ env:
    client_payload_tag: '2.5.2'
    client_payload_sha: 'c7d34d0'
    client_payload_repo: 'deep-soft/far2l'
-   client_payload_date: '20231004'
+   client_payload_date: '20231014'
    client_payload_url: 'deep-soft/far2l'
    client_payload_message: 'far2l portable'
 
@@ -78,8 +79,10 @@ jobs:
         shell: bash
         run: |
           pushd far2l
-          for plug in netcfgplugin sqlplugin processes ; do
-            # git clone --depth 1 https://github.com/VPROFi/$plug.git && \
+          # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
+          # https://github.com/axxie/far2l-jumpword
+          # https://github.com/unxed/far2l-EditWrap
+          for plug in netcfgplugin sqlplugin processes jumpword EditWrap ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( mv far2l-$plug $plug && \
               cd $plug && \

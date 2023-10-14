@@ -1,4 +1,4 @@
-name: act-build
+name: act-build-centos
 run-name: 🌙 Build 2.5.2
 
 on:

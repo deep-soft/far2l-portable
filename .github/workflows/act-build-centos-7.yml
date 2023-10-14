@@ -35,21 +35,21 @@ jobs:
         run: |
           # echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
           # apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
-          if [ "${{ matrix.distro }}" = "centos" ]; then
+          if [[ "${{ matrix.distro }}" == "centos" ]]; then
             echo "yum...begin";
             yum update -y;
-            yum --enablerepo=extras install -y epel-release;
-            yum --enablerepo=epel install -y ${{ env.PACKAGES }};
-            yum install -y centos-release-scl;
-            yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++;
+            yum --enablerepo=extras install -y epel-release
+            yum --enablerepo=epel install -y ${{ env.PACKAGES }}
+            yum install -y centos-release-scl
+            yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++
             # sudo scl enable devtoolset-8 -- bash
             echo "yum...end";
             
             echo "source scl_source enable devtoolset-8";
-            source scl_source enable devtoolset-8;
+            source scl_source enable devtoolset-8
             
             echo "nvm -y install 16.15.1";
-            nvm -y install 16.15.1;
+            nvm -y install 16.15.1
             echo "...OK"
             exit 0;
           fi

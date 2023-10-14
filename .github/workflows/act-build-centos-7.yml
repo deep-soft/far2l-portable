@@ -1,6 +1,6 @@
 # 2023-10-14 15:20
 name: act-build-centos
-run-name: 🌙 Build 2.5.2
+run-name: far2l 2.5.2 - centos
 
 on:
   workflow_dispatch:
@@ -27,14 +27,16 @@ jobs:
     steps:
       - name: Add build dependencies
         env:
+          #ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
+          #libuchardet-dev libxerces-c-dev libxi-dev libtree makeself ninja-build patch patchelf quilt wget
           PACKAGES: >
-            ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
-            libuchardet-dev libxerces-c-dev libxi-dev libtree makeself ninja-build patch patchelf quilt wget
+            ccache cmake file g++ libarchive-devel neon-devel libnfs-devel pcre-devel libsmbclient-devel 
+            libssh-devel uchardet-devel libxerces-c-devel libXi-devel libtree makeself ninja-build patch patchelf quilt wget curl
         run: |
           if [ "${{ matrix.distro }}" = "centos" ]; then
             yum update -y 
             yum --enablerepo=extras install -y epel-release
-            yum --enablerepo=epel install -y curl ${{ env.PACKAGES }}
+            yum --enablerepo=epel install -y ${{ env.PACKAGES }}
             # echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
             # apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
           fi

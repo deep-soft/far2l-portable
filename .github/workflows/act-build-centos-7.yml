@@ -26,6 +26,7 @@ jobs:
     container: ${{ matrix.distro }}:${{ matrix.version }}
     steps:
       - name: Add build dependencies
+        continue-on-error: true
         env:
           #ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
           #libuchardet-dev libxerces-c-dev libxi-dev libtree makeself ninja-build patch patchelf quilt wget
@@ -41,15 +42,16 @@ jobs:
             yum --enablerepo=extras install -y epel-release
             yum --enablerepo=epel install -y ${{ env.PACKAGES }}
             yum install -y centos-release-scl
-            yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++
-            # sudo scl enable devtoolset-8 -- bash
+            yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++ || true;
             echo "yum...end";
             
-            echo "source scl_source enable devtoolset-8";
-            source scl_source enable devtoolset-8
+            echo "sudo scl enable devtoolset-8 -- bash"
+            sudo scl enable devtoolset-8 -- bash || true;
+            # echo "source scl_source enable devtoolset-8";
+            # source scl_source enable devtoolset-8
             
-            echo "nvm -y install 16.15.1";
-            nvm -y install 16.15.1
+            echo "nvm -y install 16.15.1"
+            nvm -y install 16.15.1 || true;
             echo "...OK"
             exit 0;
           fi

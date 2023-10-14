@@ -49,6 +49,9 @@ jobs:
             sudo scl enable devtoolset-8 -- bash || true;
             # echo "source scl_source enable devtoolset-8";
             # source scl_source enable devtoolset-8
+
+            echo "install nvm"
+            curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
             
             echo "nvm -y install 16.15.1"
             nvm -y install 16.15.1 || true;
@@ -57,10 +60,10 @@ jobs:
           fi
 
       - name: Checkout
-        uses: deep-soft/checkout@v4
+        uses: deep-soft/checkout@v3
 
       - name: Checkout far2l
-        uses: deep-soft/checkout@v4
+        uses: deep-soft/checkout@v3
         with:
           repository: ${{ env.client_payload_repo }}
           path: far2l

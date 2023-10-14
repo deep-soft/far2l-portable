@@ -39,7 +39,8 @@ jobs:
             yum --enablerepo=epel install -y ${{ env.PACKAGES }}
             yum install -y centos-release-scl
             yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++
-            scl -y enable devtoolset-8 -- bash
+            # sudo scl enable devtoolset-8 -- bash
+            source scl_source enable devtoolset-8
             nvm -y install 16.15.1
             # echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
             # apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}

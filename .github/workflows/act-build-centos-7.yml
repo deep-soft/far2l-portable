@@ -1,4 +1,4 @@
-# 2023-10-14 15:20
+# 2023-10-14 19:30
 name: act-build-centos
 run-name: far2l 2.5.2 - centos
 
@@ -33,17 +33,25 @@ jobs:
             ccache cmake file g++ libarchive-devel neon-devel libnfs-devel pcre-devel libsmbclient-devel 
             libssh-devel uchardet-devel libxerces-c-devel libXi-devel libtree makeself ninja-build patch patchelf quilt wget curl
         run: |
+          # echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
+          # apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
           if [ "${{ matrix.distro }}" = "centos" ]; then
-            yum update -y 
-            yum --enablerepo=extras install -y epel-release
-            yum --enablerepo=epel install -y ${{ env.PACKAGES }}
-            yum install -y centos-release-scl
-            yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++
+            echo "yum...begin";
+            yum update -y;
+            yum --enablerepo=extras install -y epel-release;
+            yum --enablerepo=epel install -y ${{ env.PACKAGES }};
+            yum install -y centos-release-scl;
+            yum install -y devtoolset-8-gcc devtoolset-8-gcc-c++;
             # sudo scl enable devtoolset-8 -- bash
-            source scl_source enable devtoolset-8
-            nvm -y install 16.15.1
-            # echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
-            # apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
+            echo "yum...end";
+            
+            echo "source scl_source enable devtoolset-8";
+            source scl_source enable devtoolset-8;
+            
+            echo "nvm -y install 16.15.1";
+            nvm -y install 16.15.1;
+            echo "...OK"
+            exit 0;
           fi
 
       - name: Checkout

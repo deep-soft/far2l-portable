@@ -1,0 +1,76 @@
+name: act-build
+run-name: 🌙 Build 2.5.2
+
+on:
+  workflow_dispatch:
+#  repository_dispatch:
+#    types: [build-nightly]
+env:
+   client_payload_tag: '2.5.2'
+   client_payload_sha: 'c7d34d0'
+   client_payload_repo: 'deep-soft/far2l'
+   client_payload_date: '20231004'
+   client_payload_url: 'deep-soft/far2l'
+   client_payload_message: 'far2l portable'
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - distro: ubuntu
+            version: '16.04'
+    container: ${{ matrix.distro }}:${{ matrix.version }}
+    steps:
+      - name: Add build dependencies
+        env:
+          PACKAGES: >
+            ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
+            libuchardet-dev libxerces-c-dev libxi-dev libtree makeself ninja-build patch patchelf quilt wget
+        run: |
+          if [ "${{ matrix.distro }}" = "ubuntu" ]; then
+            echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
+            apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Checkout far2l
+        uses: actions/checkout@v3
+        with:
+          repository: ${{ env.client_payload_repo }}
+          path: far2l
+
+      - name: Setup ccache
+        uses: actions/cache@v3
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ matrix.distro }}-${{ matrix.version }}-${{ env.client_payload_sha }}
+          restore-keys: |
+            ccache-${{ matrix.distro }}-${{ matrix.version }}-
+
+      - name: Build far2l
+        working-directory: ./far2l
+        env:
+          DATE: ${{ env.client_payload_date }}
+          SHA:  ${{ env.client_payload_sha }}
+          TAG:  ${{ env.client_payload_tag }}
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          DESTDIR: ${{ github.workspace }}/AppDir
+          STANDALONE: true
+        shell: bash
+        run: |
+          export VERSION=${TAG}.git${DATE}
+          export PKG_NAME=far2l_${VERSION}_$(uname -m)-glibc
+          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: far2l-${{ matrix.distro }}-${{ matrix.version }}
+          path: |
+            ./**/far2l*.tar*
+          if-no-files-found: error

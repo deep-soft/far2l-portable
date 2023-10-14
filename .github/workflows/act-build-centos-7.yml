@@ -32,7 +32,9 @@ jobs:
             libuchardet-dev libxerces-c-dev libxi-dev libtree makeself ninja-build patch patchelf quilt wget
         run: |
           if [ "${{ matrix.distro }}" = "centos" ]; then
-            yum update -y && yum install -y --enablerepo=epel curl ${{ env.PACKAGES }}
+            yum update -y 
+            yum --enablerepo=extras install -y epel-release
+            yum --enablerepo=epel install -y curl ${{ env.PACKAGES }}
             # echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
             # apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
           fi

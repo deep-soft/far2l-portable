@@ -81,8 +81,8 @@ jobs:
           pushd far2l
           # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
           # https://github.com/axxie/far2l-jumpword
-          # skip https://github.com/unxed/far2l-EditWrap
-          for plug in netcfgplugin sqlplugin processes jumpword ; do
+          # https://github.com/unxed/far2l-EditWrap
+          for plug in netcfgplugin sqlplugin processes jumpword EditWrap ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( mv far2l-$plug $plug && \
               cd $plug && \

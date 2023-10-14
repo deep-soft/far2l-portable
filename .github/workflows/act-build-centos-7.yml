@@ -46,15 +46,10 @@ jobs:
             echo "yum...end";
             
             echo "sudo scl enable devtoolset-8 -- bash"
-            sudo scl enable devtoolset-8 -- bash || true;
+            scl enable devtoolset-8 -- bash || true;
             # echo "source scl_source enable devtoolset-8";
             # source scl_source enable devtoolset-8
 
-            echo "install nvm"
-            curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
-            
-            echo "nvm -y install 16.15.1"
-            nvm -y install 16.15.1 || true;
             echo "...OK"
             exit 0;
           fi

@@ -146,7 +146,7 @@ jobs:
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: deep-soft/upload-artifact@v3
         with:
           name: far2l-${{ matrix.arch }}
           path: |
@@ -174,7 +174,7 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: deep-soft/download-artifact@v3
 
       - name: Store .tar files
         id: store

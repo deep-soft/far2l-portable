@@ -1,7 +1,7 @@
-# 2023-10-14 13:20
-# add jumpword EditWrap
+# 2023-10-15 14:30
+# get far2l SHA and version
 name: act-build - x64, x86
-run-name: Build 2.5.2 - x64
+run-name: Build 2.5.2 - x64, x86
 
 env:
    client_payload_name: 'far2l'
@@ -11,6 +11,13 @@ env:
    client_payload_date: '20231015'
    client_payload_url: 'deep-soft/far2l'
    client_payload_message: 'far2l portable'
+   TAG_NAME:      "far2l"
+   TAG_VERSION:   "far2l-v2.5.2"
+   TAG_BUILD:     "-b"
+   TAG_REF:       "0000000"
+   PROG_NAME:     "far2l"
+   PROG_VERSION:  "v2.5.2"
+   VERSION:       "2.5.2"
 
 on:
   workflow_dispatch:
@@ -64,12 +71,31 @@ jobs:
           repository: ${{ env.client_payload_repo }}
           path: far2l
 
-      - name: Checkout far2l get ref
+      - name: Checkout far2l get SHA and version
         shell: bash
         run: |
-         pushd far2l
-         far2l_ref=$(/usr/bin/git log -1 --format='%H')
-         echo "far2l_ref=$far2l_ref"
+          pushd far2l
+          _far2l_sha_=$(git log -1 --format='%H')
+          _date_=$(date +%Y%m%d)
+          echo "client_payload_date=$_date_" >> $GITHUB_ENV
+
+          _ref_org_=${{ env.TAG_REF }}
+          _ref_len_="${#_ref_org_}"
+          _far2l_sha_short_=$(echo ${_far2l_sha_::$_ref_len_})
+
+          echo "TAG_REF=$_far2l_sha_short_" >> $GITHUB_ENV
+          echo "client_payload_sha=$_far2l_sha_short_" >> $GITHUB_ENV
+
+          _version_=$(cat packaging/version)
+          echo "VERSION=$_version_" >> $GITHUB_ENV
+          echo "PROG_VERSION=v$_version_" >> $GITHUB_ENV
+          echo "client_payload_tag=v$_version_" >> $GITHUB_ENV
+
+          _build_=${{ env.TAG_BUILD }}-$_date_-$_far2l_sha_short_
+
+          echo "TAG_BUILD=$_build_" >> $GITHUB_ENV
+          echo "WORK_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "TAG_DATE=$_date_" >> $GITHUB_ENV
 
       - name: patch far2l existing extra plugins
         shell: bash

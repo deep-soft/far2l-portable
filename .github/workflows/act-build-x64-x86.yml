@@ -153,8 +153,7 @@ jobs:
           path: ${{ github.workspace }}/.ccache
           key: ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
           restore-keys: |
-            ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
-            #ccache-${{ matrix.arch }}-
+            ccache-${{ matrix.arch }}-
 
       - name: Setup Alpine Linux for ${{ matrix.arch }}
         uses: deep-soft/setup-alpine@v1

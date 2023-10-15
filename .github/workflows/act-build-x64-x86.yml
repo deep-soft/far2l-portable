@@ -64,7 +64,7 @@ jobs:
           repository: ${{ env.client_payload_repo }}
           path: far2l
 
-      - name: Checkout far2l get ref:
+      - name: Checkout far2l get ref
         shell: bash
         run: |
          pushd far2l

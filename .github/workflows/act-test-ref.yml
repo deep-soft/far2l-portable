@@ -1,6 +1,6 @@
 # 2023-10-14 13:20
-name: act-build - x64, x86
-run-name: test - ref - Build 2.5.2 - x64, x86
+name: test -ref- act-build - x64, x86
+run-name: test -ref- Build 2.5.2 - x64, x86
 
 env:
    client_payload_name: 'far2l'

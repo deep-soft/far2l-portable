@@ -84,8 +84,7 @@ jobs:
         run: |
           pushd far2l
           # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
-          # skip https://github.com/axxie/far2l-jumpword
-          # skip https://github.com/unxed/far2l-EditWrap
+          # far2l-netcfgplugin far2l-sqlplugin far2l-processes
           for plug in netcfgplugin sqlplugin processes ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( echo "mv far2l-$plug $plug" && \
@@ -94,16 +93,18 @@ jobs:
               find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
               mv src/* . && rm -rf src )
             echo "add_subdirectory($plug)" >> CMakeLists.txt
-            grep "add_subdirectory" CMakeLists.txt
           done
+          # https://github.com/axxie/far2l-jumpword
+          # https://github.com/unxed/far2l-EditWrap
           # far2l-EditWrap far2l-jumpword
           for plug in EditWrap jumpword ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( echo "mv far2l-$plug $plug" && \
               mv far2l-$plug $plug )
             echo "add_subdirectory($plug)" >> CMakeLists.txt
-            grep "add_subdirectory" CMakeLists.txt
           done
+          echo "grep add_subdirectory CMakeLists.txt"
+          grep "add_subdirectory" CMakeLists.txt
           # patch if_tunnel.h, add ip.h before
           echo 'patch if_tunnel.h, add ip.h before'
           sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>!' netcfgplugin/common/netlink.h

@@ -191,7 +191,7 @@ jobs:
         uses: deep-soft/zip-release@v2
         with:
           type: 'zip'
-          filename: 'far2l-${{ matrix.arch }}.zip'
+          filename: 'far2l-${{ matrix.arch }}'
           directory: 'far2l/build/install'
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 

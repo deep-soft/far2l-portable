@@ -193,6 +193,7 @@ jobs:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}'
           directory: 'far2l/build/install'
+          path: '.'
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact

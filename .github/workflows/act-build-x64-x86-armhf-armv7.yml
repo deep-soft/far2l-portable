@@ -34,6 +34,32 @@ on:
         type: boolean
         required: true
         default: false
+      MULTIARC_PDF:
+        description: MULTIARC_PDF
+        type: boolean
+        default: false
+        required: true
+      MULTIARC_PDF_PARAMS:
+        description: MULTIARC_PDF_PARAMS
+        default: "multiarc/src/ArcPlg.cpp"
+        required: true
+      SED_STUFF:
+        description: SED_STUFF
+        type: boolean
+        default: false
+        required: true
+      SED_STUFF_PARAMS:
+        description: SED_STUFF_PARAMS
+        default: "filename_to_cat"
+        required: true
+      DEBUG_MODE_1:
+        description: DEBUG_MODE_1
+        default: "N"
+        required: true
+      DEBUG_MODE_2:
+        description: DEBUG_MODE_2
+        default: "N"
+        required: true
 
 jobs:
   build-chroot:
@@ -113,6 +139,32 @@ jobs:
 #          sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;
 #          sed -ibak 's!add_subdirectory (far2l-EditWrap)!# add_subdirectory (far2l-EditWrap)!' far2l/CMakeLists.txt;
 #          sed -ibak 's!add_subdirectory (far2l-jumpword)!# add_subdirectory (far2l-jumpword)!' far2l/CMakeLists.txt;
+
+      - name: Checkout and MULTIARC_PDF patch 1
+        if: ${{ inputs.MULTIARC_PDF }}
+        #continue-on-error: true
+        shell: bash
+        env:
+          DEBUG_MODE_1: ${{ inputs.DEBUG_MODE_1 }}
+          DEBUG_MODE_2: ${{ inputs.DEBUG_MODE_2 }}
+        run: |
+          pushd far2l
+          if [[ -f bins/multiarc-pdf-patch.sh ]]; then
+            bash bins/multiarc-pdf-patch.sh "sed-stuff-multiarc-pdf.txt" "${{ inputs.MULTIARC_PDF_PARAMS }}"
+          fi
+          popd
+
+      - name: Checkout and sed-stuff
+        if: ${{ inputs.SED_STUFF }}
+        continue-on-error: true
+        shell: bash
+        env:
+          DEBUG_MODE_1: ${{ inputs.DEBUG_MODE_1 }}
+          DEBUG_MODE_2: ${{ inputs.DEBUG_MODE_2 }}
+        run: |
+          pushd far2l
+          bash bins/sed-stuff.sh "_" "${{ inputs.SED_STUFF_PARAMS }}"
+          popd
 
       - name: Checkout and patch far2l extra plugins
         shell: bash

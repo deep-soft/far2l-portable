@@ -213,14 +213,13 @@ jobs:
         uses: deep-soft/setup-alpine@v1
         with:
           arch: ${{ matrix.arch }}
-          #branch: v3.16
-          branch: latest-stable
+          #branch: v3.16 or latest-stable
           packages: >
             git bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
             libtree libxi-dev linux-headers neon-dev ninja patchelf pcre-dev perl samba-dev tar ninja-is-really-ninja
             uchardet-dev wget xerces-c-dev xz
           shell-name: alpine.sh
-          # packages: ninja-is-really-ninja
+          #packages: ninja-is-really-ninja
 
       - name: Add extra build-deps to chroot
         shell: alpine.sh --root {0}

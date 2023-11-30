@@ -212,7 +212,7 @@ jobs:
         uses: deep-soft/setup-alpine@v1
         with:
           arch: ${{ matrix.arch }}
-          branch: 3.16
+          branch: v3.16
           packages: >
             git bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
             libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar

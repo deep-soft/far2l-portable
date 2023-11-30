@@ -215,9 +215,10 @@ jobs:
           branch: v3.16
           packages: >
             git bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
-            libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar
+            libtree libxi-dev linux-headers neon-dev ninja patchelf pcre-dev perl samba-dev tar
             uchardet-dev wget xerces-c-dev xz
           shell-name: alpine.sh
+          # packages: ninja-is-really-ninja
 
       - name: Add extra build-deps to chroot
         shell: alpine.sh --root {0}

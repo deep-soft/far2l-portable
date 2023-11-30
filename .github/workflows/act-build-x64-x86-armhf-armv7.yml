@@ -151,7 +151,7 @@ jobs:
         run: |
           pushd far2l
           if [[ -f bins/multiarc-pdf-patch.sh ]]; then
-            bash bins/multiarc-pdf-patch.sh "sed-stuff-multiarc-pdf.txt" "${{ inputs.MULTIARC_PDF_PARAMS }}"
+            bash bins/multiarc-pdf-patch.sh "bins/sed-stuff-multiarc-pdf.txt" "${{ inputs.MULTIARC_PDF_PARAMS }}"
           fi
           popd
 

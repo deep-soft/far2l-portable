@@ -1,7 +1,7 @@
 # 2023-10-15 14:30
 # get far2l SHA and version
 name: act-build - x64, x86, armhf, armv7
-run-name: Build 2.5.2 - x64, x86, armhf, armv7
+run-name: Build - x64, x86, armhf, armv7
 
 env:
    client_payload_name: 'far2l'

@@ -1,5 +1,6 @@
-# 2023-10-15 14:30
+# 2023-12-01 09:00
 # get far2l SHA and version
+# apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 name: act-build - x64, x86, armhf, armv7
 run-name: Build - x64, x86, armhf, armv7
 
@@ -224,6 +225,7 @@ jobs:
         shell: alpine.sh --root {0}
         run: |
           apk add --no-progress makeself quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+          apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 
       - name: Build far2l inside chroot
         working-directory: ./far2l

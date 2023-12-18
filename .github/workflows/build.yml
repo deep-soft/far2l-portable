@@ -96,6 +96,7 @@ jobs:
       - name: Setup Alpine Linux for ${{ matrix.arch }}
         uses: jirutka/setup-alpine@v1
         with:
+          branch: v3.18
           arch: ${{ matrix.arch }}
           packages: >
             bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev

@@ -288,7 +288,7 @@ jobs:
         with:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}-ALL'
-          directory: '.'
+          directory: '$GITHUB_WORKSPACE'
           path: '.'
           env_variable: ZIP_ALL
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}

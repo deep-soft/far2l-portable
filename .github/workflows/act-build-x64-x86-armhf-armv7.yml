@@ -256,7 +256,7 @@ jobs:
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
       - name: Archive Release
-        uses: deep-soft/zip-release@v2
+        uses: deep-soft/zip-release@v2.1
         with:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}'
@@ -284,7 +284,7 @@ jobs:
 
       - name: Archive - ZIP_ALL
         if: ${{ inputs.ZIP_ALL }}
-        uses: deep-soft/zip-release@v2
+        uses: deep-soft/zip-release@v2.1
         with:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}-ALL'

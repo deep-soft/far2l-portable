@@ -288,12 +288,12 @@ jobs:
         with:
           type: 'zip'
           filename: 'far2l-${{ matrix.arch }}-ALL'
-          directory: '$GITHUB_WORKSPACE'
+          directory: ${{ github.workspace }}
           path: '.'
           env_variable: ZIP_ALL
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
-      - name: Publish ZIP_ALL
+      - name: Publish - ZIP_ALL
         if: ${{ inputs.ZIP_ALL }}
         continue-on-error: true
         uses: deep-soft/action-gh-release@v1

@@ -19,6 +19,7 @@ env:
    PROG_NAME:     "far2l"
    PROG_VERSION:  "v2.5.2"
    VERSION:       "2.5.2"
+   DRAFT:         true
 
 on:
   workflow_dispatch:
@@ -32,6 +33,12 @@ on:
       # if: ${{ inputs.release_all }}
       release_all:
         description: Release all
+        type: boolean
+        required: true
+        default: false
+      # if: ${{ inputs.ZIP_ALL }}
+      ZIP_ALL:
+        description: ZIP ALL
         type: boolean
         required: true
         default: false
@@ -267,14 +274,34 @@ jobs:
 
       - name: Publish Release
         continue-on-error: true
-        uses: deep-soft/release-action@v1
+        uses: deep-soft/action-gh-release@v1
         with:
           draft: ${{ env.DRAFT }}
-          tag: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
-          allowUpdates: true
-          artifacts: |
+          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
+          files: |
             ./**/far2l*.tar
             ${{ env.ZIP_RELEASE_ARCHIVE }}
+
+      - name: Archive - ZIP_ALL
+        if: ${{ inputs.ZIP_ALL }}
+        uses: deep-soft/zip-release@v2
+        with:
+          type: 'zip'
+          filename: 'far2l-${{ matrix.arch }}-ALL'
+          directory: '.'
+          path: '.'
+          env_variable: ZIP_ALL
+          # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
+
+      - name: Publish ZIP_ALL
+        if: ${{ inputs.ZIP_ALL }}
+        continue-on-error: true
+        uses: deep-soft/action-gh-release@v1
+        with:
+          draft: ${{ env.DRAFT }}
+          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}-ALL
+          files: |
+            ${{ env.ZIP_ALL }}
 
   release:
     if: ${{ inputs.release_all }}

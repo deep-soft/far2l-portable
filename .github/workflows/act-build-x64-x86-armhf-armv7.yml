@@ -81,7 +81,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: deep-soft/checkout@v3
+        uses: deep-soft/checkout@v4
 
       - name: patch build_far2l.sh for run-after-cmake-before-package.sh
         shell: bash
@@ -101,7 +101,7 @@ jobs:
 
       - name: Checkout far2l
         id: id_check_far2l
-        uses: deep-soft/checkout@v3
+        uses: deep-soft/checkout@v4
         with:
           repository: ${{ env.client_payload_repo }}
           path: far2l
@@ -210,7 +210,7 @@ jobs:
           popd
           
       - name: Setup ccache
-        uses: deep-soft/cache@v3
+        uses: deep-soft/cache@v4
         with:
           path: ${{ github.workspace }}/.ccache
           key: ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
@@ -274,7 +274,7 @@ jobs:
 
       - name: Publish Release
         continue-on-error: true
-        uses: deep-soft/action-gh-release@v1
+        uses: deep-soft/action-gh-release@v2.1
         with:
           draft: ${{ env.DRAFT }}
           tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
@@ -296,7 +296,7 @@ jobs:
       - name: Publish - ZIP_ALL
         if: ${{ inputs.ZIP_ALL }}
         continue-on-error: true
-        uses: deep-soft/action-gh-release@v1
+        uses: deep-soft/action-gh-release@v2.1
         with:
           draft: ${{ env.DRAFT }}
           tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}-ALL

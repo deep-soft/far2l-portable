@@ -265,7 +265,7 @@ jobs:
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
 
       - name: Upload artifact
-        uses: deep-soft/upload-artifact@v3
+        uses: deep-soft/upload-artifact@v4
         with:
           name: far2l-${{ matrix.arch }}
           path: |
@@ -313,11 +313,11 @@ jobs:
 
     steps:
       - name: Download artifacts
-        uses: deep-soft/download-artifact@v3
+        uses: deep-soft/download-artifact@v4
 
       - name: Store .tar files
         id: store
-        uses: andelf/nightly-release@main
+        uses: deep-soft/nightly-release@v2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           URL: ${{ env.client_payload_url }}
@@ -332,5 +332,5 @@ jobs:
             ./**/far2l_*.run.tar
 
       - name: Delete workflow runs
-        uses: Mattraks/delete-workflow-runs@v2
+        uses: deep-soft/delete-workflow-runs@v2
         continue-on-error: true

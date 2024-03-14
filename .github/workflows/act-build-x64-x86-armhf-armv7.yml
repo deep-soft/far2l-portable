@@ -1,4 +1,4 @@
-# 2023-12-31 16:00
+# 2024-03-14 23:40
 # get far2l SHA and version
 # apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 name: act-build - x64, x86, armhf, armv7
@@ -181,7 +181,7 @@ jobs:
           pushd far2l
           # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
           # far2l-netcfgplugin far2l-sqlplugin far2l-processes
-          for plug in netcfgplugin sqlplugin processes ; do
+          for plug in netcfgplugin sqlplugin processes Comment; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( echo "mv far2l-$plug $plug" && \
               mv far2l-$plug $plug && \

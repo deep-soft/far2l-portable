@@ -1,4 +1,4 @@
-# 2024-03-14 23:40
+# 2024-03-15 01:00
 # get far2l SHA and version
 # apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 name: act-build - x64, x86, armhf, armv7
@@ -132,23 +132,6 @@ jobs:
           echo "WORK_DIR=$(pwd)" >> $GITHUB_ENV
           echo "TAG_DATE=$_date_" >> $GITHUB_ENV
 
-# old plugins, removed from base git
-#      - name: patch far2l existing extra plugins
-#        shell: bash
-#        run: |
-#          echo 'remove existing extra plugin folders'
-#          rm -R far2l/far2l-netcfgplugin;
-#          rm -R far2l/far2l-processes;
-#          rm -R far2l/far2l-sqlplugin;
-#          rm -R far2l/far2l-EditWrap;
-#          rm -R far2l/far2l-jumpword;
-#          echo 'remove existing extra plugin from CMakeLists.txt'
-#          sed -ibak 's!add_subdirectory (far2l-netcfgplugin)!# add_subdirectory (far2l-netcfgplugin)!' far2l/CMakeLists.txt;
-#          sed -ibak 's!add_subdirectory (far2l-processes)!# add_subdirectory (far2l-processes)!' far2l/CMakeLists.txt;
-#          sed -ibak 's!add_subdirectory (far2l-sqlplugin)!# add_subdirectory (far2l-sqlplugin)!' far2l/CMakeLists.txt;
-#          sed -ibak 's!add_subdirectory (far2l-EditWrap)!# add_subdirectory (far2l-EditWrap)!' far2l/CMakeLists.txt;
-#          sed -ibak 's!add_subdirectory (far2l-jumpword)!# add_subdirectory (far2l-jumpword)!' far2l/CMakeLists.txt;
-
       - name: Checkout and MULTIARC_PDF patch 1
         if: ${{ inputs.MULTIARC_PDF }}
         #continue-on-error: true
@@ -179,9 +162,10 @@ jobs:
         shell: bash
         run: |
           pushd far2l
+
           # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
           # far2l-netcfgplugin far2l-sqlplugin far2l-processes
-          for plug in netcfgplugin sqlplugin processes Comment; do
+          for plug in netcfgplugin sqlplugin processes ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( echo "mv far2l-$plug $plug" && \
               mv far2l-$plug $plug && \
@@ -192,8 +176,8 @@ jobs:
           done
           # https://github.com/axxie/far2l-jumpword
           # https://github.com/unxed/far2l-EditWrap
-          # far2l-EditWrap far2l-jumpword
-          for plug in EditWrap jumpword ; do
+          # far2l-SimpleComment far2l-EditWrap far2l-jumpword
+          for plug in SimpleComment EditWrap jumpword ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( echo "mv far2l-$plug $plug" && \
               mv far2l-$plug $plug )

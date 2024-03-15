@@ -1,2 +1,3 @@
 far2l-src-cfg-ConfigOpt.cpp.patch
 WinPort-src-Backend-WinPortMain.cpp.patch
+wayland.patch

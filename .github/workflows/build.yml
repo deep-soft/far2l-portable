@@ -135,12 +135,12 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-20.04, ubuntu-latest]
     steps:
       - name: Add build dependencies
         env:
           PACKAGES: >
-            ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
+            ccache cmake file g++ libarchive-dev libfuse2 libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
             libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch patchelf quilt wget
         run: |
             sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
@@ -173,7 +173,7 @@ jobs:
         shell: bash
         run: |
           export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
-          export PKG_NAME=far2l_${VERSION}_$(uname -m)
+          export PKG_NAME=far2l_${VERSION}_$(uname -m)_$(grep -oP '^PRETTY_NAME="\K.+?(?<=\d{2}\.\d{2})' /etc/os-release | tr -d '. ')
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
       - name: Upload artifact

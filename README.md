@@ -13,7 +13,7 @@ wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2
 ```
 ### AppImage
 with wx-GUI and some extra plugins
-* built on Ubuntu LTS | ~45 MB (x86_64 only)
+* built on Ubuntu LTS | ~50 MB (x86_64 only)
 ```
 wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l_x86_64_Ubuntu2004.AppImage.tar | tar -xv -C /tmp && /tmp/far2l_*2004.AppImage
 ```

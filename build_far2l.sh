@@ -58,7 +58,7 @@ if [[ "$APPIMAGE" == "true" ]]; then
     wget --no-check-certificate https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-$ARCH.AppImage && \
     wget --no-check-certificate https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage && \
     chmod +x *.AppImage && \
-    ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=AppRun --library=$(dpkg -L librsvg2-common | grep 'libpixbufloader-svg.so$') && \
+    ./linuxdeploy-*.AppImage --appdir=AppDir --custom-apprun=AppRun && \
     ./appimagetool-*.AppImage -v AppDir $PKG_NAME.AppImage && \
     tar cvf ${PKG_NAME/${VERSION}_}.AppImage.tar $PKG_NAME.AppImage )
 fi

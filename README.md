@@ -1,20 +1,20 @@
-[![build](https://github.com/spvkgn/far2l-portable/actions/workflows/build.yml/badge.svg)](https://github.com/spvkgn/far2l-portable/actions/workflows/build.yml) ![version](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/spvkgn/f53cb6c1d56b0eaf40c88d607fc5fef1/raw/far2l-portable.json)
+[![build](https://github.com/spvkgn/far2l-portable/actions/workflows/build.yml/badge.svg)](https://github.com/spvkgn/far2l-portable/actions/workflows/build.yml) [![version](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/spvkgn/f53cb6c1d56b0eaf40c88d607fc5fef1/raw/far2l-portable.json)](https://github.com/spvkgn/far2l-portable/releases/latest)
 # [FAR2L](https://github.com/elfmz/far2l) File Manager portable | AppImage
 ## Download and run
 ### Self-extractable tar-archive
 with TTY X/Xi backend
 * built on Alpine | ~20 MB (x86_64 x86 aarch64 armhf armv7 ppc64le s390x)
 ```
-wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l_$(uname -m).run.tar | tar -xv -C /tmp && /tmp/far2l_*.run
+wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l-$(uname -m).run.tar | tar -xv -C /tmp && /tmp/far2l*.run
 ```
 * built on Ubuntu 16.04 | ~30 MB (x86_64 only)
 ```
-wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l_$(uname -m)-glibc.run.tar | tar -xv -C /tmp && /tmp/far2l_*.run
+wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l-x86_64-glibc.run.tar | tar -xv -C /tmp && /tmp/far2l*.run
 ```
 ### AppImage
 with wx-GUI and some extra plugins
-* built on Ubuntu 20.04 | ~45 MB (x86_64 only)
+* built on Ubuntu 22.04 | ~55 MB (x86_64 only)
 ```
-wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l_$(uname -m).AppImage.tar | tar -xv -C /tmp && /tmp/far2l_*.AppImage
+wget -qO- https://github.com/spvkgn/far2l-portable/releases/download/latest/far2l-x86_64.AppImage.tar | tar -xv -C /tmp && /tmp/far2l*.AppImage
 ```
 Or get the binary in [Releases](https://github.com/spvkgn/far2l-portable/releases)

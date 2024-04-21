@@ -46,17 +46,16 @@ jobs:
             ccache-${{ matrix.distro }}-${{ matrix.version }}-
 
       - name: Build far2l
-        working-directory: ./far2l
+        working-directory: far2l
         env:
           DATE: ${{ github.event.client_payload.date }}
           SHA: ${{ github.event.client_payload.sha }}
           TAG: ${{ github.event.client_payload.tag }}
           STANDALONE: true
-        shell: bash
         run: |
           export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
-          export PKG_NAME=far2l_${VERSION}_$(uname -m)-glibc
-          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+          export PKG_NAME=far2l_${VERSION}-$(uname -m)-glibc
+          bash -x ../build_far2l.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -109,7 +108,7 @@ jobs:
           apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 
       - name: Build far2l inside chroot
-        working-directory: ./far2l
+        working-directory: far2l
         env:
           DATE: ${{ github.event.client_payload.date }}
           SHA: ${{ github.event.client_payload.sha }}
@@ -119,8 +118,8 @@ jobs:
         shell: alpine.sh {0}
         run: |
           export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
-          export PKG_NAME=far2l_${VERSION}_${ARCH}
-          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+          export PKG_NAME=far2l_${VERSION}-${ARCH}
+          bash -x ../build_far2l.sh
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -135,13 +134,14 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04]
+        os: [ubuntu-22.04]
     steps:
       - name: Add build dependencies
         env:
           PACKAGES: >
-            ccache cmake file g++ libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev libssh-dev
-            libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch patchelf quilt wget
+            ccache cmake desktop-file-utils file g++ libarchive-dev libfuse2 libneon27-dev libnfs-dev libpcre3-dev
+            libsmbclient-dev libssh-dev libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch
+            patchelf python3-minimal python3-wheel quilt squashfs-tools wget
         run: |
             sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
 
@@ -163,18 +163,43 @@ jobs:
             ccache-${{ matrix.os }}-
 
       - name: Build far2l
-        working-directory: ./far2l
+        working-directory: far2l
         env:
           DATE: ${{ github.event.client_payload.date }}
           SHA: ${{ github.event.client_payload.sha }}
           TAG: ${{ github.event.client_payload.tag }}
-          APPIMAGE: true
           PLUGINS_EXTRA: true
-        shell: bash
         run: |
-          export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
-          export PKG_NAME=far2l_${VERSION}_$(uname -m)
-          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+          bash -x ../build_far2l.sh
+
+      - name: Build AppImage
+        env:
+          DATE: ${{ github.event.client_payload.date }}
+          TAG: ${{ github.event.client_payload.tag }}
+        run: |
+          export ARCH=$(uname -m)
+          export APPIMAGE_VERSION=$TAG
+          export APPIMAGE_APT_ARCH=$(dpkg-architecture -qDEB_HOST_ARCH)
+          export APPIMAGE_APT_DISTRO=$(awk -F= '/^VERSION_CODENAME=/ {print $2}' /etc/os-release)
+          export APPIMAGE_ARCH=$ARCH
+          export PYTHON3_VERSION=$(py3versions -vd)
+
+          # appimagetool with Squashfs zstd compression support
+          wget --no-check-certificate -O appimagetool https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-$ARCH.AppImage
+          chmod +x appimagetool
+          # static runtime
+          wget --no-check-certificate -O runtime https://github.com/probonopd/static-tools/releases/download/2023/runtime-fuse2-$ARCH
+
+          python -m venv _venv && source _venv/bin/activate
+          pip install git+https://github.com/AppImageCrafters/appimage-builder.git
+          appimage-builder --skip-appimage --recipe AppImageBuilder.yml
+          APPIMAGE_EXTRACT_AND_RUN=1 VERSION=$TAG ./appimagetool -v --runtime-file runtime AppDir
+
+          # Put AppImage into .tar
+          VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
+          PKG_NAME=far2l_${VERSION}-${ARCH}
+          mv far2l*.AppImage $PKG_NAME.AppImage
+          tar cvf ${PKG_NAME/_${VERSION}}.AppImage.tar far2l*.AppImage
 
       - name: Upload artifact
         uses: actions/upload-artifact@v3
@@ -206,8 +231,8 @@ jobs:
           body: |
             ${{ github.event.client_payload.url }}: ${{ github.event.client_payload.message }}
           files: |
-            ./**/far2l_*.run.tar
-            ./**/far2l_*.AppImage.tar
+            ./**/far2l*.run.tar
+            ./**/far2l*.AppImage.tar
 
       - name: Update version for badge
         if: steps.assets.outcome == 'success'

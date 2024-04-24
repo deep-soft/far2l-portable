@@ -13,18 +13,18 @@ jobs:
       matrix:
         include:
           - distro: ubuntu
-            version: '16.04'
+            version: '18.04'
     container: ${{ matrix.distro }}:${{ matrix.version }}
     steps:
       - name: Add build dependencies
         env:
           PACKAGES: >
-            ca-certificates ccache cmake file g++ git libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev
+            ca-certificates ccache cmake file g++-8 git libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev
             libssh-dev libuchardet-dev libxerces-c-dev libxi-dev libtree makeself ninja-build patch patchelf quilt wget
         run: |
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then
             echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
-            echo "deb [trusted=yes] http://ppa.launchpad.net/git-core/ppa/ubuntu xenial main" | tee /etc/apt/sources.list.d/git-core.list
+            echo "deb [trusted=yes] http://ppa.launchpad.net/git-core/ppa/ubuntu bionic main" | tee /etc/apt/sources.list.d/git-core.list
             apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
           fi
 
@@ -53,6 +53,8 @@ jobs:
           TAG: ${{ github.event.client_payload.tag }}
           STANDALONE: true
         run: |
+          export CC=gcc-8
+          export CXX=g++-8
           export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
           export PKG_NAME=far2l_${VERSION}-$(uname -m)-glibc
           bash -x ../build_far2l.sh

@@ -6,7 +6,7 @@ on:
     types: [build-nightly]
 
 jobs:
-  build:
+  build-portable-glibc:
     name: build
     runs-on: ubuntu-latest
     strategy:
@@ -65,7 +65,7 @@ jobs:
             ./**/far2l*.tar*
           if-no-files-found: error
 
-  build-chroot:
+  build-portable-musl:
     name: build ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -143,7 +143,7 @@ jobs:
             libsmbclient-dev libssh-dev libuchardet-dev libwxgtk3.0-gtk3-dev libxerces-c-dev libxi-dev ninja-build patch
             patchelf python3-minimal python3-wheel quilt squashfs-tools wget
         run: |
-            sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
+          sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -211,7 +211,7 @@ jobs:
 
   release:
     name: Update Nightly release
-    needs: [build, build-chroot, build-AppImage]
+    needs: [build-portable-glibc, build-portable-musl, build-AppImage]
     permissions:
       contents: write
     runs-on: ubuntu-latest

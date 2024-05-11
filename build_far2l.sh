@@ -30,14 +30,13 @@ fi
 ( cd $REPO_DIR/far2l && QUILT_PATCHES=$REPO_DIR/patches quilt push -a )
 
 mkdir -p $BUILD_DIR && \
-cmake -G Ninja -S $REPO_DIR/far2l -B$REPO_DIR/far2l/$BUILD_DIR \
+cmake -S $REPO_DIR/far2l -B$REPO_DIR/far2l/$BUILD_DIR \
   -DCMAKE_BUILD_TYPE=Release \
   -DCMAKE_INSTALL_PREFIX=/usr \
-  -DCMAKE_VERBOSE_MAKEFILE=ON \
   -DCMAKE_C_COMPILER_LAUNCHER=/usr/bin/ccache \
   -DCMAKE_CXX_COMPILER_LAUNCHER=/usr/bin/ccache \
   ${CMAKE_OPTS[@]} && \
-  ninja -C $REPO_DIR/far2l/$BUILD_DIR install/strip && \
+  cmake --build $REPO_DIR/far2l/$BUILD_DIR --target install -- -j$(nproc) && \
 
 if [[ "$STANDALONE" == "true" ]]; then
   mkdir -p $REPO_DIR/standalone && cp -a $REPO_DIR/far2l/$BUILD_DIR/install/* $REPO_DIR/standalone && \

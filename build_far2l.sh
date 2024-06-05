@@ -36,7 +36,7 @@ cmake -S $REPO_DIR/far2l -B$REPO_DIR/far2l/$BUILD_DIR \
   -DCMAKE_C_COMPILER_LAUNCHER=/usr/bin/ccache \
   -DCMAKE_CXX_COMPILER_LAUNCHER=/usr/bin/ccache \
   ${CMAKE_OPTS[@]} && \
-  cmake --build $REPO_DIR/far2l/$BUILD_DIR --target install -- -j$(nproc) && \
+  cmake --build $REPO_DIR/far2l/$BUILD_DIR --target install -- -j$(nproc) || exit 1
 
 if [[ "$STANDALONE" == "true" ]]; then
   mkdir -p $REPO_DIR/standalone && cp -a $REPO_DIR/far2l/$BUILD_DIR/install/* $REPO_DIR/standalone && \

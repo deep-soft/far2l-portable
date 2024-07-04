@@ -15,6 +15,9 @@ jobs:
           - distro: ubuntu
             version: '18.04'
     container: ${{ matrix.distro }}:${{ matrix.version }}
+    env:
+      # workaround for checkout@v3, https://github.com/actions/checkout/issues/1590
+      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Add build dependencies
         env:

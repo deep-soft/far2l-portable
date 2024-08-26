@@ -102,7 +102,7 @@ jobs:
           arch: ${{ matrix.arch }}
           packages: >
             bash build-base ccache cmake coreutils findutils gawk git grep libarchive-dev libnfs-dev libssh-dev libtree
-            libxi-dev linux-headers neon-dev patchelf pcre-dev perl samba-dev tar uchardet-dev wget xerces-c-dev xz
+            libxi-dev linux-headers neon-dev patchelf pcre-dev perl samba-dev tar uchardet-dev wget libxml2-dev xz
           shell-name: alpine.sh
 
       - name: Add extra build-deps to chroot

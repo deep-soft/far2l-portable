@@ -239,6 +239,9 @@ jobs:
         run: |
           export VERSION=${TAG}.git${DATE}
           export PKG_NAME=far2l_${VERSION}_${ARCH}
+          if [ "${{ inputs.PLUGINS }}" == "false" ]; then
+            export PKG_NAME=far2l_${VERSION}_${ARCH}_no_plugins
+          fi
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
       - name: Archive Release

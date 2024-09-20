@@ -1,0 +1,310 @@
+# 2024-09-20 14:20
+# get far2l SHA and version
+# apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+# act-build-x64-x86-armhf-armv7-mipsel.yml
+name: act-build - x64, x86, armhf, armv7, mipsel
+run-name: Build - x64, x86, armhf, armv7, mipsel
+
+env:
+   client_payload_name: 'far2l'
+   client_payload_tag: '2.5.3'
+   client_payload_sha: '2b8aa80'
+   client_payload_repo: 'deep-soft/far2l'
+   client_payload_date: '20231231'
+   client_payload_url: 'deep-soft/far2l'
+   client_payload_message: 'far2l portable'
+   TAG_NAME:      "far2l"
+   TAG_VERSION:   "far2l-v2.5.2"
+   TAG_BUILD:     "-b"
+   TAG_REF:       "0000000"
+   PROG_NAME:     "far2l"
+   PROG_VERSION:  "v2.5.2"
+   VERSION:       "2.5.2"
+   DRAFT:         true
+
+on:
+  workflow_dispatch:
+    inputs:
+      # if: ${{ inputs.PLUGINS }}
+      PLUGINS: 
+        description: PLUGINS
+        type: boolean
+        required: true
+        default: false
+      # if: ${{ inputs.PLUGINS_EXTRA }}
+      PLUGINS_EXTRA: 
+        description: PLUGINS_EXTRA
+        type: boolean
+        required: true
+        default: false
+      # if: ${{ inputs.release_all }}
+      release_all:
+        description: Release all
+        type: boolean
+        required: true
+        default: false
+      # if: ${{ inputs.ZIP_ALL }}
+      ZIP_ALL:
+        description: ZIP ALL
+        type: boolean
+        required: true
+        default: false
+      SED_STUFF:
+        description: SED_STUFF
+        type: boolean
+        default: true
+        required: true
+      SED_STUFF_PARAMS:
+        description: SED_STUFF_PARAMS
+        default: "filename_to_cat"
+        required: true
+      DEBUG_MODE_1:
+        description: DEBUG_MODE_1
+        default: "N"
+        required: true
+      DEBUG_MODE_2:
+        description: DEBUG_MODE_2
+        default: "N"
+        required: true
+
+jobs:
+  build-chroot:
+    name: build ${{ matrix.arch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+          arch: [x86_64, x86, armhf, armv7, mipsel, mipsle]
+          os: [ubuntu-latest]
+
+    steps:
+      - name: Checkout
+        uses: deep-soft/checkout@v4
+
+      - name: patch build_far2l.sh for run-after-cmake-before-package.sh
+        shell: bash
+        run: |
+          sed -ibak '/find \$REPO_DIR -type d -path \"\*\/AppDir\"/i \\nbash ${GITHUB_WORKSPACE}/run-after-cmake-before-package.sh' ${GITHUB_WORKSPACE}/build_far2l.sh;
+          cat ${GITHUB_WORKSPACE}/build_far2l.sh;
+
+      - name: patch build_far2l.sh for PLUGINS_EXTRA
+        if: ${{ inputs.PLUGINS_EXTRA }}
+        shell: bash
+        run: |
+          sed -ibak "s!( cd \$plug!( mv far2l-\$plug \$plug \&\& \\n       cd \$plug!" ${GITHUB_WORKSPACE}/build_far2l.sh;
+          #cat ${GITHUB_WORKSPACE}/build_far2l.sh;
+          echo "PLUGINS=false" >> $GITHUB_ENV;
+          echo "PLUGINS_EXTRA=false" >> $GITHUB_ENV;
+          if [ ${{ inputs.PLUGINS }} ]; then
+            echo "PLUGINS=true" >> $GITHUB_ENV;
+          fi
+          if [ ${{ inputs.PLUGINS_EXTRA }} ]; then
+            echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
+          fi
+
+      - name: Checkout far2l
+        id: id_check_far2l
+        uses: deep-soft/checkout@v4
+        with:
+          repository: ${{ env.client_payload_repo }}
+          path: far2l
+
+      - name: far2l get SHA and version
+        shell: bash
+        run: |
+          pushd far2l
+          _far2l_sha_=$(git log -1 --format='%H')
+          _date_=$(date +%Y%m%d)
+          echo "client_payload_date=$_date_" >> $GITHUB_ENV
+
+          _ref_org_=${{ env.TAG_REF }}
+          _ref_len_="${#_ref_org_}"
+          _far2l_sha_short_=$(echo ${_far2l_sha_::$_ref_len_})
+
+          echo "TAG_REF=$_far2l_sha_short_" >> $GITHUB_ENV
+          echo "client_payload_sha=$_far2l_sha_short_" >> $GITHUB_ENV
+
+          _version_=$(cat packaging/version)
+          echo "VERSION=$_version_" >> $GITHUB_ENV
+          echo "PROG_VERSION=v$_version_" >> $GITHUB_ENV
+          echo "client_payload_tag=v$_version_" >> $GITHUB_ENV
+
+          _build_=${{ env.TAG_BUILD }}-$_date_-$_far2l_sha_short_
+
+          echo "TAG_BUILD=$_build_" >> $GITHUB_ENV
+          echo "WORK_DIR=$(pwd)" >> $GITHUB_ENV
+          echo "TAG_DATE=$_date_" >> $GITHUB_ENV
+
+      - name: sed-stuff
+        if: ${{ inputs.SED_STUFF }}
+        continue-on-error: true
+        shell: bash
+        env:
+          DEBUG_MODE_1: ${{ inputs.DEBUG_MODE_1 }}
+          DEBUG_MODE_2: ${{ inputs.DEBUG_MODE_2 }}
+        run: |
+          pushd far2l
+          bash bins/sed-stuff.sh "_" "${{ inputs.SED_STUFF_PARAMS }}"
+          popd
+
+      - name: patch far2l extra plugins
+        if: ${{ inputs.PLUGINS_EXTRA }}
+        shell: bash
+        run: |
+          pushd far2l
+
+          # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
+          # far2l-netcfgplugin far2l-sqlplugin far2l-processes
+          for plug in netcfgplugin sqlplugin processes ; do
+            git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
+            ( echo "mv far2l-$plug $plug" && \
+              mv far2l-$plug $plug && \
+              cd $plug && \
+              find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
+              mv src/* . && rm -rf src )
+            echo "add_subdirectory($plug)" >> CMakeLists.txt
+          done
+          # https://github.com/axxie/far2l-jumpword
+          # https://github.com/unxed/far2l-EditWrap
+          # far2l-SimpleComment far2l-EditWrap far2l-jumpword
+          for plug in SimpleComment EditWrap jumpword ; do
+            git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
+            ( echo "mv far2l-$plug $plug" && \
+              mv far2l-$plug $plug )
+            echo "add_subdirectory($plug)" >> CMakeLists.txt
+          done
+          echo "grep add_subdirectory CMakeLists.txt"
+          grep "add_subdirectory" CMakeLists.txt
+          # patch if_tunnel.h, add ip.h before
+          echo 'patch if_tunnel.h, add ip.h before'
+          sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>!' netcfgplugin/common/netlink.h
+          echo 'grep /i.*.h netcfgplugin/common/netlink.h'
+          grep '/i.*.h' netcfgplugin/common/netlink.h
+
+          popd
+          
+      - name: Setup ccache
+        uses: deep-soft/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ matrix.arch }}-${{ env.client_payload_sha }}
+          restore-keys: |
+            ccache-${{ matrix.arch }}-
+
+      - name: Setup Alpine Linux for ${{ matrix.arch }}
+        uses: deep-soft/setup-alpine@v1
+        #with: branch: v3.16 or latest-stable
+        with:
+          branch: v3.18
+          arch: ${{ matrix.arch }}
+          packages: >
+            git bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
+            libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar
+            uchardet-dev wget libxml2-dev xz
+          shell-name: alpine.sh
+
+      - name: Add extra build-deps to chroot
+          #apk add --no-progress makeself --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+          #apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+        shell: alpine.sh --root {0}
+        run: |
+          #apk add --no-progress makeself --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+          #apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+          apk add makeself --repository=https://dl-cdn.alpinelinux.org/alpine/edge/testing
+          apk add quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
+
+      - name: Build far2l inside chroot
+        working-directory: ./far2l
+        env:
+          DATE: ${{ env.client_payload_date }}
+          SHA:  ${{ env.client_payload_sha }}
+          TAG:  ${{ env.client_payload_tag }}
+          ARCH: ${{ matrix.arch }}
+          CCACHE_DIR: ${{ github.workspace }}/.ccache
+          DESTDIR: ${{ github.workspace }}/AppDir
+          STANDALONE: true
+        shell: alpine.sh {0}
+        run: |
+          export VERSION=${TAG}.git${DATE}
+          export PKG_NAME=far2l_${VERSION}_${ARCH}
+          bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
+
+      - name: Archive Release
+        uses: deep-soft/zip-release@v2.1
+        with:
+          type: 'zip'
+          filename: 'far2l-${{ matrix.arch }}'
+          directory: 'far2l/build/install'
+          path: '.'
+          # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
+
+      - name: Upload artifact
+        uses: deep-soft/upload-artifact@v4
+        with:
+          name: far2l-${{ matrix.arch }}
+          path: |
+            ./**/far2l*.tar*
+          if-no-files-found: error
+
+      - name: Publish Release
+        continue-on-error: true
+        uses: deep-soft/action-gh-release@v2.1
+        with:
+          draft: ${{ env.DRAFT }}
+          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
+          files: |
+            ./**/far2l*.tar
+            ${{ env.ZIP_RELEASE_ARCHIVE }}
+
+      - name: Archive - ZIP_ALL
+        if: ${{ inputs.ZIP_ALL }}
+        uses: deep-soft/zip-release@v2.1
+        with:
+          type: 'zip'
+          filename: 'far2l-${{ matrix.arch }}-ALL'
+          directory: ${{ github.workspace }}
+          path: '.'
+          env_variable: ZIP_ALL
+          # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
+
+      - name: Publish - ZIP_ALL
+        if: ${{ inputs.ZIP_ALL }}
+        continue-on-error: true
+        uses: deep-soft/action-gh-release@v2.1
+        with:
+          draft: ${{ env.DRAFT }}
+          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}-ALL
+          files: |
+            ${{ env.ZIP_ALL }}
+
+  release:
+    if: ${{ inputs.release_all }}
+    name: Upload release all
+    needs: [build-chroot]
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download artifacts
+        uses: deep-soft/download-artifact@v4
+
+      - name: Store .tar files
+        id: store
+        uses: deep-soft/nightly-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          URL: ${{ env.client_payload_url }}
+          MESSAGE: ${{ env.client_payload_message }}
+        with:
+          prerelease: false
+          tag_name: latest
+          name: ${{ env.client_payload_date }}
+          body: |
+            ${{ env.URL }}: ${{ env.MESSAGE }}
+          files: |
+            ./**/far2l_*.run.tar
+
+      - name: Delete workflow runs
+        uses: deep-soft/delete-workflow-runs@v2
+        continue-on-error: true

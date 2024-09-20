@@ -1,9 +1,9 @@
 # 2024-09-20 14:20
 # get far2l SHA and version
 # apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
-# act-build-x64-x86-armhf-armv7-mipsel.yml
-name: act-build - x64, x86, armhf, armv7, mipsel
-run-name: Build - x64, x86, armhf, armv7, mipsel
+# act-build-x64-x86-armhf-armv7-no-plugins.yml
+name: act-build - x64, x86, armhf, armv7 -no plugins
+run-name: Build - x64, x86, armhf, armv7 -no plugins
 
 env:
    client_payload_name: 'far2l'
@@ -25,18 +25,6 @@ env:
 on:
   workflow_dispatch:
     inputs:
-      # if: ${{ inputs.PLUGINS }}
-      PLUGINS: 
-        description: PLUGINS
-        type: boolean
-        required: true
-        default: false
-      # if: ${{ inputs.PLUGINS_EXTRA }}
-      PLUGINS_EXTRA: 
-        description: PLUGINS_EXTRA
-        type: boolean
-        required: true
-        default: false
       # if: ${{ inputs.release_all }}
       release_all:
         description: Release all
@@ -87,32 +75,10 @@ jobs:
           sed -ibak '/find \$REPO_DIR -type d -path \"\*\/AppDir\"/i \\nbash ${GITHUB_WORKSPACE}/run-after-cmake-before-package.sh' ${GITHUB_WORKSPACE}/build_far2l.sh;
           cat ${GITHUB_WORKSPACE}/build_far2l.sh;
 
-      - name: patch build_far2l.sh for PLUGINS
+      - name: NO PLUGINS
         shell: bash
         run: |
           echo "PLUGINS=false" >> $GITHUB_ENV;
-          echo "PLUGINS_EXTRA=false" >> $GITHUB_ENV;
-          if [ "${{ inputs.PLUGINS }}" == "true" ]; then
-            echo "PLUGINS=true" >> $GITHUB_ENV;
-          fi
-          if [ "${{ inputs.PLUGINS_EXTRA }}" == "true" ]; then
-            echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
-          fi
-
-      - name: patch build_far2l.sh for PLUGINS_EXTRA
-        if: ${{ inputs.PLUGINS_EXTRA }}
-        shell: bash
-        run: |
-          sed -ibak "s!( cd \$plug!( mv far2l-\$plug \$plug \&\& \\n       cd \$plug!" ${GITHUB_WORKSPACE}/build_far2l.sh;
-          #cat ${GITHUB_WORKSPACE}/build_far2l.sh;
-          echo "PLUGINS=false" >> $GITHUB_ENV;
-          echo "PLUGINS_EXTRA=false" >> $GITHUB_ENV;
-          if [ "${{ inputs.PLUGINS }}" == "true" ]; then
-            echo "PLUGINS=true" >> $GITHUB_ENV;
-          fi
-          if [ "${{ inputs.PLUGINS_EXTRA }}" == "true" ]; then
-            echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
-          fi
 
       - name: Checkout far2l
         id: id_check_far2l
@@ -158,43 +124,7 @@ jobs:
           pushd far2l
           bash bins/sed-stuff.sh "_" "${{ inputs.SED_STUFF_PARAMS }}"
           popd
-
-      - name: patch far2l extra plugins
-        if: ${{ inputs.PLUGINS_EXTRA }}
-        shell: bash
-        run: |
-          pushd far2l
-
-          # https://github.com/VPROFi/netcfgplugin, # https://github.com/VPROFi/sqlplugin, # https://github.com/VPROFi/processes
-          # far2l-netcfgplugin far2l-sqlplugin far2l-processes
-          for plug in netcfgplugin sqlplugin processes ; do
-            git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
-            ( echo "mv far2l-$plug $plug" && \
-              mv far2l-$plug $plug && \
-              cd $plug && \
-              find . -mindepth 1 -name 'src' -prune -o -exec rm -rf {} + && \
-              mv src/* . && rm -rf src )
-            echo "add_subdirectory($plug)" >> CMakeLists.txt
-          done
-          # https://github.com/axxie/far2l-jumpword
-          # https://github.com/unxed/far2l-EditWrap
-          # far2l-SimpleComment far2l-EditWrap far2l-jumpword
-          for plug in SimpleComment EditWrap jumpword ; do
-            git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
-            ( echo "mv far2l-$plug $plug" && \
-              mv far2l-$plug $plug )
-            echo "add_subdirectory($plug)" >> CMakeLists.txt
-          done
-          echo "grep add_subdirectory CMakeLists.txt"
-          grep "add_subdirectory" CMakeLists.txt
-          # patch if_tunnel.h, add ip.h before
-          echo 'patch if_tunnel.h, add ip.h before'
-          sed -ibak 's!#include <linux/if_tunnel.h>!#include <linux/ip.h>\n#include <linux/if_tunnel.h>!' netcfgplugin/common/netlink.h
-          echo 'grep /i.*.h netcfgplugin/common/netlink.h'
-          grep '/i.*.h' netcfgplugin/common/netlink.h
-
-          popd
-          
+         
       - name: Setup ccache
         uses: deep-soft/cache@v4
         with:
@@ -238,17 +168,14 @@ jobs:
         shell: alpine.sh {0}
         run: |
           export VERSION=${TAG}.git${DATE}
-          export PKG_NAME=far2l_${VERSION}_${ARCH}
-          if [ "${{ inputs.PLUGINS }}" == "false" ]; then
-            export PKG_NAME=far2l_${VERSION}_${ARCH}_no_plugins
-          fi
+          export PKG_NAME=far2l_${VERSION}_${ARCH}_no_plugins
           bash -x ${GITHUB_WORKSPACE}/build_far2l.sh
 
       - name: Archive Release
         uses: deep-soft/zip-release@v2.1
         with:
           type: 'zip'
-          filename: 'far2l-${{ matrix.arch }}'
+          filename: 'far2l-${{ matrix.arch }}-no_plugins'
           directory: 'far2l/build/install'
           path: '.'
           # archive name is ${{ env.ZIP_RELEASE_ARCHIVE }}
@@ -256,7 +183,7 @@ jobs:
       - name: Upload artifact
         uses: deep-soft/upload-artifact@v4
         with:
-          name: far2l-${{ matrix.arch }}
+          name: far2l-${{ matrix.arch }}-no_plugins
           path: |
             ./**/far2l*.tar*
           if-no-files-found: error
@@ -266,7 +193,7 @@ jobs:
         uses: deep-soft/action-gh-release@v2.1
         with:
           draft: ${{ env.DRAFT }}
-          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}
+          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}-no_plugins
           files: |
             ./**/far2l*.tar
             ${{ env.ZIP_RELEASE_ARCHIVE }}
@@ -276,7 +203,7 @@ jobs:
         uses: deep-soft/zip-release@v2.1
         with:
           type: 'zip'
-          filename: 'far2l-${{ matrix.arch }}-ALL'
+          filename: 'far2l-${{ matrix.arch }}-no_plugins-ALL'
           directory: ${{ github.workspace }}
           path: '.'
           env_variable: ZIP_ALL
@@ -288,7 +215,7 @@ jobs:
         uses: deep-soft/action-gh-release@v2.1
         with:
           draft: ${{ env.DRAFT }}
-          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}-ALL
+          tag_name: ${{ env.client_payload_name }}-${{ env.client_payload_tag }}-no_plugins-ALL
           files: |
             ${{ env.ZIP_ALL }}
 
@@ -314,7 +241,7 @@ jobs:
         with:
           prerelease: false
           tag_name: latest
-          name: ${{ env.client_payload_date }}
+          name: ${{ env.client_payload_date }}-no_plugins
           body: |
             ${{ env.URL }}: ${{ env.MESSAGE }}
           files: |

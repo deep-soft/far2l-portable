@@ -92,10 +92,10 @@ jobs:
         run: |
           echo "PLUGINS=false" >> $GITHUB_ENV;
           echo "PLUGINS_EXTRA=false" >> $GITHUB_ENV;
-          if [ ${{ inputs.PLUGINS }} ]; then
+          if [ "${{ inputs.PLUGINS }}" == "true" ]; then
             echo "PLUGINS=true" >> $GITHUB_ENV;
           fi
-          if [ ${{ inputs.PLUGINS_EXTRA }} ]; then
+          if [ "${{ inputs.PLUGINS_EXTRA }}" == "true" ]; then
             echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
           fi
 
@@ -107,10 +107,10 @@ jobs:
           #cat ${GITHUB_WORKSPACE}/build_far2l.sh;
           echo "PLUGINS=false" >> $GITHUB_ENV;
           echo "PLUGINS_EXTRA=false" >> $GITHUB_ENV;
-          if [ ${{ inputs.PLUGINS }} ]; then
+          if [ "${{ inputs.PLUGINS }}" == "true" ]; then
             echo "PLUGINS=true" >> $GITHUB_ENV;
           fi
-          if [ ${{ inputs.PLUGINS_EXTRA }} ]; then
+          if [ "${{ inputs.PLUGINS_EXTRA }}" == "true" ]; then
             echo "PLUGINS_EXTRA=true" >> $GITHUB_ENV;
           fi
 

@@ -70,6 +70,38 @@ on:
         required: true
 
 jobs:
+  check:
+    # if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.gh.outputs.date }}
+      sha: ${{ steps.gh.outputs.sha }}
+      tag: ${{ steps.gh.outputs.tag }}
+      url: ${{ steps.gh.outputs.url }}
+      message: ${{ steps.gh.outputs.message }}
+    steps:
+      - name: GH API
+        id: gh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH=$(gh api repos/$REPO --jq '.default_branch')
+          DATE=$(gh api repos/$REPO/commits/$BRANCH --jq '.commit.committer.date')
+          {
+            echo "date=$(date --utc -d $DATE +%F)"
+            echo "sha=$(gh api repos/$REPO/commits/$BRANCH --jq '.sha[0:7]')"
+            echo "tag=$(wget -qO- https://raw.githubusercontent.com/$REPO/$BRANCH/packaging/version)"
+            echo "url=$(gh api repos/$REPO/commits/$BRANCH --jq '.html_url')"
+            echo "message=$(gh api repos/$REPO/commits/$BRANCH | jq -c '.commit.message' | perl -pe 's/^"|"$//g;' -pe "s|(?=#\d+)|$REPO|g")"
+          } >> $GITHUB_OUTPUT
+          {
+            echo "date=$(date --utc -d $DATE +%F)"
+            echo "sha=$(gh api repos/$REPO/commits/$BRANCH --jq '.sha[0:7]')"
+            echo "tag=$(wget -qO- https://raw.githubusercontent.com/$REPO/$BRANCH/packaging/version)"
+            echo "url=$(gh api repos/$REPO/commits/$BRANCH --jq '.html_url')"
+            echo "message=$(gh api repos/$REPO/commits/$BRANCH | jq -c '.commit.message' | perl -pe 's/^"|"$//g;' -pe "s|(?=#\d+)|$REPO|g")"
+          }
+
   build-chroot:
     name: build ${{ matrix.arch }}
     runs-on: ${{ matrix.os }}

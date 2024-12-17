@@ -1,24 +1,24 @@
-# 2024-03-15 01:00
+# 2024-12-17 07:45
 # get far2l SHA and version
 # apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 name: act-build - x64, x86, armhf, armv7
-run-name: Build - x64, x86, armhf, armv7
+run-name: ${{ github.event_name == 'repository_dispatch' && format('🌙 Nightly build 🚀 {0}-{1}-{2}', github.event.client_payload.tag, github.event.client_payload.date, github.event.client_payload.sha) || null }}
 
 env:
    client_payload_name: 'far2l'
-   client_payload_tag: '2.5.3'
-   client_payload_sha: '2b8aa80'
+   client_payload_tag: '2.6.4'
+   client_payload_sha: 'fa27ce8'
    client_payload_repo: 'deep-soft/far2l'
-   client_payload_date: '20231231'
+   client_payload_date: '20241217'
    client_payload_url: 'deep-soft/far2l'
    client_payload_message: 'far2l portable'
    TAG_NAME:      "far2l"
-   TAG_VERSION:   "far2l-v2.5.2"
+   TAG_VERSION:   "far2l-v2.6.4"
    TAG_BUILD:     "-b"
    TAG_REF:       "0000000"
    PROG_NAME:     "far2l"
-   PROG_VERSION:  "v2.5.2"
-   VERSION:       "2.5.2"
+   PROG_VERSION:  "v2.6.4"
+   VERSION:       "2.6.4"
    DRAFT:         true
 
 on:

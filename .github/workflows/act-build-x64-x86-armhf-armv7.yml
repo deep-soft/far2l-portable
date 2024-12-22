@@ -20,6 +20,7 @@ env:
    PROG_VERSION:  "v2.6.4"
    VERSION:       "2.6.4"
    DRAFT:         true
+   REPO:          'deep-soft/far2l'
 
 on:
   workflow_dispatch:

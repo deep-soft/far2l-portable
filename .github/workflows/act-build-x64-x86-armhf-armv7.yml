@@ -73,7 +73,7 @@ on:
 jobs:
   check:
     # if: github.event_name == 'workflow_dispatch'
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     outputs:
       date: ${{ steps.gh.outputs.date }}
       sha: ${{ steps.gh.outputs.sha }}
@@ -110,7 +110,7 @@ jobs:
       fail-fast: false
       matrix:
           arch: [x86_64, x86, armhf, armv7]
-          os: [ubuntu-latest]
+          os: [ubuntu-22.04]
 
     steps:
       - name: Checkout

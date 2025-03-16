@@ -1,4 +1,4 @@
-# 2024-12-17 07:45
+# 2025-03-16 12:25
 # get far2l SHA and version
 # apk add --no-progress quilt --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community
 name: act-build - x64, x86, armhf, armv7
@@ -237,11 +237,12 @@ jobs:
       - name: Setup Alpine Linux for ${{ matrix.arch }}
         uses: deep-soft/setup-alpine@v1
         #with: branch: v3.16 or latest-stable
+        # not anymore: packages: binfmt-support 
         with:
           branch: v3.18
           arch: ${{ matrix.arch }}
           packages: >
-            git bash binfmt-support build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
+            git bash build-base ccache cmake coreutils findutils gawk grep libarchive-dev libnfs-dev libssh-dev
             libtree libxi-dev linux-headers neon-dev ninja-is-really-ninja patchelf pcre-dev perl samba-dev tar
             uchardet-dev wget libxml2-dev xz
           shell-name: alpine.sh
@@ -266,6 +267,7 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
           DESTDIR: ${{ github.workspace }}/AppDir
           STANDALONE: true
+          # WXGUI: false
         shell: alpine.sh {0}
         run: |
           export VERSION=${TAG}.git${DATE}

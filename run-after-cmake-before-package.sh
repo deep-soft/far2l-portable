@@ -1,5 +1,6 @@
 #!/bin/bash
-lng_hlf_no_eng=$(find . -name *.lng -o -name *.hlf | grep -i -v "eng\.\|en\.\|calce\.|colorere\.")
+# run-after-cmake-before-package.sh
+lng_hlf_no_eng=$(find . -name *.lng -o -name *.hlf | grep -i -v "eng\.\|en\.\|calce\.\|colorere\.");
 for lng_hlf in $lng_hlf_no_eng ; do
   echo "$lng_hlf";
   rm "$lng_hlf";

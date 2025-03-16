@@ -25,6 +25,12 @@ env:
 on:
   workflow_dispatch:
     inputs:
+      # if: ${{ inputs.patch-after-cmake-before-package }}
+      patch-after-cmake-before-package: 
+        description: patch-after-cmake-before-package
+        type: boolean
+        required: true
+        default: false
       # if: ${{ inputs.PLUGINS_EXTRA }}
       PLUGINS_EXTRA: 
         description: PLUGINS_EXTRA
@@ -117,6 +123,7 @@ jobs:
         uses: deep-soft/checkout@v4
 
       - name: patch build_far2l.sh for run-after-cmake-before-package.sh
+        if: ${{ inputs.patch-after-cmake-before-package }}
         shell: bash
         run: |
           sed -ibak '/find \$REPO_DIR -type d -path \"\*\/AppDir\"/i \\nbash ${GITHUB_WORKSPACE}/run-after-cmake-before-package.sh' ${GITHUB_WORKSPACE}/build_far2l.sh;

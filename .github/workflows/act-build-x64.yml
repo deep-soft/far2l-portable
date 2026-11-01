@@ -226,7 +226,8 @@ jobs:
           # https://github.com/axxie/far2l-jumpword
           # https://github.com/unxed/far2l-EditWrap
           # far2l-SimpleComment far2l-EditWrap far2l-jumpword
-          for plug in SimpleComment EditWrap jumpword ; do
+          # for plug in SimpleComment EditWrap jumpword ; do
+          for plug in SimpleComment EditWrap ; do
             git clone --depth 1 https://github.com/deep-soft/far2l-$plug.git && \
             ( echo "mv far2l-$plug $plug" && \
               mv far2l-$plug $plug )

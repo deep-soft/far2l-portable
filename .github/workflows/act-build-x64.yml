@@ -283,7 +283,7 @@ jobs:
           CCACHE_DIR: ${{ github.workspace }}/.ccache
           DESTDIR: ${{ github.workspace }}/AppDir
           STANDALONE: true
-          # WXGUI: false
+          WXGUI: false
         shell: alpine.sh {0}
         run: |
           export VERSION=${TAG}.git${DATE}

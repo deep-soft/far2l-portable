@@ -1,108 +1,147 @@
 name: build
-run-name: 🌙 Nightly build 🚀 ${{ github.event.client_payload.tag }}-${{ github.event.client_payload.date }}-${{ github.event.client_payload.sha }}
+run-name: ${{ github.event_name == 'repository_dispatch' && format('🌙 Nightly build 🚀 {0}-{1}-{2}', github.event.client_payload.tag, github.event.client_payload.date, github.event.client_payload.sha) || null }}
 
 on:
+  workflow_dispatch:
   repository_dispatch:
-    types: [build-nightly]
+    types: [ build-nightly ]
+
+env:
+  REPO: 'elfmz/far2l'
 
 jobs:
-  build-portable-glibc:
-    name: build
+  check:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    outputs:
+      date: ${{ steps.gh.outputs.date }}
+      sha: ${{ steps.gh.outputs.sha }}
+      tag: ${{ steps.gh.outputs.tag }}
+      url: ${{ steps.gh.outputs.url }}
+      message: ${{ steps.gh.outputs.message }}
+    steps:
+      - name: GH API
+        id: gh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          BRANCH=$(gh api repos/$REPO --jq '.default_branch')
+          DATE=$(gh api repos/$REPO/commits/$BRANCH --jq '.commit.committer.date')
+          {
+            echo "date=$(date --utc -d $DATE +%F)"
+            echo "sha=$(gh api repos/$REPO/commits/$BRANCH --jq '.sha[0:7]')"
+            echo "tag=$(wget -qO- https://raw.githubusercontent.com/$REPO/$BRANCH/packaging/version)"
+            echo "url=$(gh api repos/$REPO/commits/$BRANCH --jq '.html_url')"
+            echo "message=$(gh api repos/$REPO/commits/$BRANCH | jq -c '.commit.message' | perl -pe 's/^"|"$//g;' -pe "s|(?=#\d+)|$REPO|g")"
+          } >> $GITHUB_OUTPUT
+
+  build-portable-glibc:
+    name: build ${{ matrix.arch }}-glibc
+    needs: check
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         include:
-          - distro: ubuntu
-            version: '18.04'
+          - os: ubuntu-22.04
+            arch: x64
+            distro: ubuntu
+            version: '20.04'
+          - os: ubuntu-22.04-arm
+            arch: arm64
+            distro: ubuntu
+            version: '20.04'
     container: ${{ matrix.distro }}:${{ matrix.version }}
-    env:
-      # workaround for checkout@v3, https://github.com/actions/checkout/issues/1590
-      ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
     steps:
       - name: Add build dependencies
         env:
+          DEBIAN_FRONTEND: noninteractive
           PACKAGES: >
-            ca-certificates ccache cmake file g++-8 git libarchive-dev libneon27-dev libnfs-dev libpcre3-dev libsmbclient-dev
-            libssh-dev libuchardet-dev libxml2-dev libxi-dev libtree makeself patch patchelf quilt wget
+            7zip ca-certificates ccache cmake file g++ git libarchive-dev libneon27-dev libnfs-dev libsmbclient-dev
+            libssh-dev libuchardet-dev libxml2-dev libxi-dev libtree make makeself patch patchelf quilt wget xz-utils
         run: |
           if [ "${{ matrix.distro }}" = "ubuntu" ]; then
-            echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu xenial main" | tee /etc/apt/sources.list.d/far2l-team.list
+            echo "deb [trusted=yes] http://ppa.launchpad.net/far2l-team/tools/ubuntu bionic main" | tee /etc/apt/sources.list.d/far2l-team.list
             echo "deb [trusted=yes] http://ppa.launchpad.net/git-core/ppa/ubuntu bionic main" | tee /etc/apt/sources.list.d/git-core.list
             apt update -qq && apt install -y --no-install-recommends ${{ env.PACKAGES }}
           fi
 
       - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Checkout far2l
-        uses: actions/checkout@v3
-        with:
-          repository: ${{ github.event.client_payload.repo }}
-          path: far2l
-
-      - name: Setup ccache
-        uses: actions/cache@v3
-        with:
-          path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ matrix.distro }}-${{ matrix.version }}-${{ github.event.client_payload.sha }}
-          restore-keys: |
-            ccache-${{ matrix.distro }}-${{ matrix.version }}-
-
-      - name: Build far2l
-        env:
-          DATE: ${{ github.event.client_payload.date }}
-          SHA: ${{ github.event.client_payload.sha }}
-          TAG: ${{ github.event.client_payload.tag }}
-          STANDALONE: true
-          WXGUI: false
-        run: |
-          export CC=gcc-8
-          export CXX=g++-8
-          export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
-          export PKG_NAME=far2l_${VERSION}-$(uname -m)-glibc
-          bash build_far2l.sh
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: far2l-${{ matrix.distro }}-${{ matrix.version }}
-          path: |
-            ./**/far2l*.tar*
-          if-no-files-found: error
-
-  build-portable-musl:
-    name: build ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-          arch: [x86_64, x86, aarch64, armhf, armv7, ppc64le, s390x]
-          os: [ubuntu-latest]
-    steps:
-      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Checkout far2l
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.client_payload.repo }}
+          repository: ${{ env.REPO }}
           path: far2l
 
       - name: Setup ccache
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ matrix.arch }}-${{ github.event.client_payload.sha }}
-          restore-keys: |
-            ccache-${{ matrix.arch }}-
+          key: ccache-${{ matrix.distro }}-${{ matrix.version }}-${{ matrix.arch }}-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || github.run_id }}
+          restore-keys: ccache-${{ matrix.distro }}-${{ matrix.version }}-${{ matrix.arch }}-
 
-      - name: Setup Alpine Linux for ${{ matrix.arch }}
+      - name: Build far2l
+        env:
+          DATE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.date || needs.check.outputs.date }}
+          SHA: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || needs.check.outputs.sha }}
+          TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || needs.check.outputs.tag }}
+          STANDALONE: true
+          WXGUI: false
+          ADD_7Z: true
+        run: |
+          export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
+          export PKG_NAME=far2l_${VERSION}-$(uname -m)-glibc
+          bash build_far2l.sh
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: far2l-${{ matrix.distro }}-${{ matrix.version }}-${{ matrix.arch }}
+          path: ./**/far2l*.tar*
+          if-no-files-found: error
+
+  build-portable-musl:
+    name: build ${{ matrix.arch }}-musl
+    needs: check
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        arch:
+          - x86_64
+          - x86
+          - aarch64
+          - armhf
+          - armv7
+          # - ppc64le
+          # - s390x
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Checkout far2l
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.REPO }}
+          path: far2l
+
+      - name: Setup ccache
+        uses: actions/cache@v4
+        with:
+          path: ${{ github.workspace }}/.ccache
+          key: ccache-${{ matrix.arch }}-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || github.run_id }}
+          restore-keys: ccache-${{ matrix.arch }}-
+
+      - name: Setup Alpine Linux
         uses: jirutka/setup-alpine@v1
         with:
           branch: v3.18
           arch: ${{ matrix.arch }}
           packages: >
             bash build-base ccache cmake coreutils findutils gawk git grep libarchive-dev libnfs-dev libssh-dev libtree
-            libxi-dev linux-headers neon-dev patchelf pcre-dev perl samba-dev tar uchardet-dev wget libxml2-dev xz
+            libxi-dev linux-headers neon-dev patchelf perl samba-dev tar uchardet-dev wget libxml2-dev xz
           shell-name: alpine.sh
 
       - name: Add extra build-deps to chroot
@@ -113,41 +152,41 @@ jobs:
 
       - name: Build far2l inside chroot
         env:
-          DATE: ${{ github.event.client_payload.date }}
-          SHA: ${{ github.event.client_payload.sha }}
-          TAG: ${{ github.event.client_payload.tag }}
+          DATE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.date || needs.check.outputs.date }}
+          SHA: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || needs.check.outputs.sha }}
+          TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || needs.check.outputs.tag }}
           ARCH: ${{ matrix.arch }}
           STANDALONE: true
           WXGUI: false
         shell: alpine.sh {0}
         run: |
           export VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
-          export PKG_NAME=far2l_${VERSION}-${ARCH}
+          export PKG_NAME=far2l_${VERSION}-${ARCH}-musl
           bash build_far2l.sh
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: far2l-${{ matrix.arch }}
-          path: |
-            ./**/far2l*.tar*
+          path: ./**/far2l*.tar*
           if-no-files-found: error
 
   build-AppImage:
     name: build AppImage
+    needs: check
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ ubuntu-22.04 ]
     steps:
       - name: Add build dependencies
         env:
           PACKAGES: >
-            ccache cmake desktop-file-utils file g++ libarchive-dev libfuse2 libneon27-dev libnfs-dev libpcre3-dev
+            ccache cmake desktop-file-utils file g++ libarchive-dev libfuse2 libneon27-dev libnfs-dev
             libsmbclient-dev libssh-dev libuchardet-dev libwxgtk3.0-gtk3-dev libxml2-dev libxi-dev patch
             patchelf python3-minimal python3-wheel quilt squashfs-tools wget
-        run: |
-          sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
+        run: sudo apt update -qq && sudo apt install -y --no-install-recommends ${{ env.PACKAGES }}
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -155,30 +194,28 @@ jobs:
       - name: Checkout far2l
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.client_payload.repo }}
+          repository: ${{ env.REPO }}
           path: far2l
 
       - name: Setup ccache
         uses: actions/cache@v4
         with:
           path: ${{ github.workspace }}/.ccache
-          key: ccache-${{ matrix.os }}-${{ github.event.client_payload.sha }}
-          restore-keys: |
-            ccache-${{ matrix.os }}-
+          key: ccache-${{ matrix.os }}-${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || github.run_id }}
+          restore-keys: ccache-${{ matrix.os }}-
 
       - name: Build far2l
         env:
-          DATE: ${{ github.event.client_payload.date }}
-          SHA: ${{ github.event.client_payload.sha }}
-          TAG: ${{ github.event.client_payload.tag }}
+          DATE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.date || needs.check.outputs.date }}
+          SHA: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || needs.check.outputs.sha }}
+          TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || needs.check.outputs.tag }}
           PLUGINS_EXTRA: false
-        run: |
-          bash build_far2l.sh
+        run: bash build_far2l.sh
 
       - name: Build AppImage
         env:
-          DATE: ${{ github.event.client_payload.date }}
-          TAG: ${{ github.event.client_payload.tag }}
+          DATE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.date || needs.check.outputs.date }}
+          TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || needs.check.outputs.tag }}
         run: |
           export ARCH=$(uname -m)
           export APPIMAGE_VERSION=$TAG
@@ -193,34 +230,40 @@ jobs:
           # static runtime
           wget --no-check-certificate -O runtime https://github.com/probonopd/static-tools/releases/download/2023/runtime-fuse2-$ARCH
 
-          python -m venv _venv && source _venv/bin/activate
-          pip install git+https://github.com/AppImageCrafters/appimage-builder.git
-          appimage-builder --skip-appimage --recipe AppImageBuilder.yml
+          pip install -U pipenv==2025.0.2
+          pipenv install -e git+https://github.com/AppImageCrafters/appimage-builder.git#egg=appimage-builder
+          pipenv run appimage-builder --skip-appimage --recipe AppImageBuilder.yml
           APPIMAGE_EXTRACT_AND_RUN=1 VERSION=$TAG ./appimagetool -v --runtime-file runtime AppDir
 
           # Put AppImage into .tar
           VERSION=${TAG}.git$(date -d $DATE +%Y%m%d)
           PKG_NAME=far2l_${VERSION}-${ARCH}
           mv far2l*.AppImage $PKG_NAME.AppImage
-          tar cvf ${PKG_NAME/_${VERSION}}.AppImage.tar far2l*.AppImage
+          tar -cvf ${PKG_NAME/_${VERSION}}.AppImage.tar far2l*.AppImage
 
       - name: Upload artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: far2l-AppImage-${{ matrix.os }}
-          path: |
-            ./**/far2l*.tar*
+          path: ./**/far2l*.tar*
           if-no-files-found: error
 
   release:
-    name: Update Nightly release
-    needs: [build-portable-glibc, build-portable-musl, build-AppImage]
+    name: Update release
+    needs: [ check, build-portable-glibc, build-portable-musl, build-AppImage ]
+    if: always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled')
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    env:
+      DATE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.date || needs.check.outputs.date }}
+      SHA: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.sha || needs.check.outputs.sha }}
+      TAG: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.tag || needs.check.outputs.tag }}
+      URL: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.url || needs.check.outputs.url }}
+      MESSAGE: ${{ github.event_name == 'repository_dispatch' && github.event.client_payload.message || needs.check.outputs.message }}
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Upload release assets
         id: assets
@@ -228,11 +271,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
+          only-when-changed: false
           prerelease: false
           tag_name: latest
-          name: ${{ github.event.client_payload.date }}
+          name: ${{ env.DATE }}
           body: |
-            ${{ github.event.client_payload.url }}: ${{ github.event.client_payload.message }}
+            ${{ format('{0}: {1}', env.URL, env.MESSAGE) }}
           files: |
             ./**/far2l*.run.tar
             ./**/far2l*.AppImage.tar
@@ -245,7 +289,7 @@ jobs:
           gistID: f53cb6c1d56b0eaf40c88d607fc5fef1
           filename: far2l-portable.json
           label: version
-          message: ${{ github.event.client_payload.tag }}-${{ github.event.client_payload.date }}-${{ github.event.client_payload.sha }}
+          message: ${{ format('{0}-{1}-{2}', env.TAG, env.DATE, env.SHA) }}
           color: blue
 
       - name: Delete workflow runs
